@@ -130,7 +130,7 @@ export async function getRecommendedUsers(
 
     // Generate embedding for current user
     const currentUserProfile: UserProfile = {
-      userId: currentUser._id.toString(),
+      userId: (currentUser._id as mongoose.Types.ObjectId).toString(),
       name: currentUser.name,
       age: currentUser.age,
       bio: currentUser.bio,
@@ -143,7 +143,7 @@ export async function getRecommendedUsers(
     const scoredCandidates = await Promise.all(
       filteredCandidates.map(async (candidate) => {
         const candidateProfile: UserProfile = {
-          userId: candidate._id.toString(),
+          userId: (candidate._id as mongoose.Types.ObjectId).toString(),
           name: candidate.name,
           age: candidate.age,
           bio: candidate.bio,
@@ -156,7 +156,7 @@ export async function getRecommendedUsers(
         // Apply collaborative filtering bonus
         const collaborativeScore = await getCollaborativeFilteringScore(
           currentUserId,
-          candidate._id.toString()
+          (candidate._id as mongoose.Types.ObjectId).toString()
         );
 
         // Combined score: 70% AI similarity + 30% collaborative filtering
@@ -181,7 +181,7 @@ export async function getRecommendedUsers(
       }
 
       return {
-        id: item.user._id.toString(),
+        id: (item.user._id as mongoose.Types.ObjectId).toString(),
         name: item.user.name,
         age: item.user.age,
         bio: item.user.bio,
@@ -244,7 +244,7 @@ export async function batchGenerateEmbeddings(userIds: string[]) {
   const embeddings = await Promise.all(
     users.map(async (user) => {
       const profile: UserProfile = {
-        userId: user._id.toString(),
+        userId: (user._id as mongoose.Types.ObjectId).toString(),
         name: user.name,
         age: user.age,
         bio: user.bio,
@@ -252,7 +252,7 @@ export async function batchGenerateEmbeddings(userIds: string[]) {
       };
       
       return {
-        userId: user._id.toString(),
+        userId: (user._id as mongoose.Types.ObjectId).toString(),
         embedding: await generateUserEmbedding(profile),
       };
     })
