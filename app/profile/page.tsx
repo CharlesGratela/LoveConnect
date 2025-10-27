@@ -166,8 +166,8 @@ export default function ProfilePage() {
                 <div className="space-y-3">
                   <div className="flex items-center gap-4">
                     <img
-                      src={formData.profilePhoto}
-                      alt={formData.name}
+                      src={formData.profilePhoto || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=400&q=80'}
+                      alt={formData.name || 'Profile'}
                       className="h-20 w-20 rounded-full object-cover border-2 border-border"
                     />
                     <div className="flex-1">
