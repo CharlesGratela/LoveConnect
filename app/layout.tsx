@@ -11,8 +11,11 @@ import { ThemeProvider } from '@/components/providers/theme-provider';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'LoveConnect - Find Your Perfect Match',
+  title: 'nXtDate - Find Your Perfect Match',
   description: 'A modern dating app to discover and connect with like-minded people',
+  icons: {
+    icon: '/favicon.svg',
+  },
 };
 
 export default function RootLayout({

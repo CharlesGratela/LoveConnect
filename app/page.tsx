@@ -20,13 +20,8 @@ export default function Home() {
     <div className="min-h-screen flex items-center justify-center p-4 gradient-bg">
       <div className="text-center animate-fade-in">
         <div className="flex justify-center mb-6">
-          <div className="flex h-24 w-24 items-center justify-center rounded-full gradient-primary shadow-elevated animate-pulse-glow">
-            <Heart className="h-12 w-12 text-primary-foreground fill-current" />
-          </div>
+          <img src="/logo.svg" alt="nXtDate" className="h-32 animate-pulse-glow" />
         </div>
-        <h1 className="text-6xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent mb-4">
-          LoveConnect
-        </h1>
         <p className="text-xl text-muted-foreground mb-8 max-w-md mx-auto">
           Discover meaningful connections powered by AI matching
         </p>

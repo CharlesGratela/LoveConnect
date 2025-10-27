@@ -155,13 +155,8 @@ export default function AuthPage() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8 animate-fade-in">
           <div className="flex justify-center mb-4">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full gradient-primary shadow-elevated">
-              <Heart className="h-10 w-10 text-primary-foreground fill-current" />
-            </div>
+            <img src="/logo.svg" alt="nXtDate" className="h-20" />
           </div>
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-            LoveConnect
-          </h1>
           <p className="text-muted-foreground mt-2">Find your perfect match</p>
         </div>
 

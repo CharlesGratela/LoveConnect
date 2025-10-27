@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 100" fill="none">
+  <defs>
+    <linearGradient id="nxtdateGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ED5F85" />
+      <stop offset="100%" stop-color="#9D56D9" />
+    </linearGradient>
+  </defs>
+
+  <!-- Heart Icon -->
+  <path d="M60 35C60 26 53 20 45 20C40 20 35 22.5 32 26.5C29 22.5 24 20 19 20C11 20 4 26 4 35C4 45 13 53 32 67C51 53 60 45 60 35Z" 
+    fill="url(#nxtdateGradient)"/>
+
+  <!-- Text -->
+  <text x="80" y="55" 
+        font-family="Poppins, Helvetica, Arial, sans-serif" 
+        font-weight="700" 
+        font-size="40" 
+        fill="url(#nxtdateGradient)">
+    nXtDate
+  </text>
+</svg>

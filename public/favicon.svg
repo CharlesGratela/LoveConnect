@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <linearGradient id="heartGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ED5F85" />
+      <stop offset="100%" stop-color="#9D56D9" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Heart Icon for favicon -->
+  <path d="M32 54C32 54 8 38 8 22C8 12 15 6 22 6C26 6 29.5 8 32 11C34.5 8 38 6 42 6C49 6 56 12 56 22C56 38 32 54 32 54Z" 
+    fill="url(#heartGradient)"/>
+</svg>
