@@ -54,7 +54,7 @@ self.addEventListener('push', (event) => {
 
   console.log('[Service Worker] 🔔 Showing notification with data:', data);
 
-  // Show the notification
+  // Show the notification with enhanced error handling
   const promiseChain = self.registration.showNotification(data.title, {
     body: data.body,
     icon: data.icon,
@@ -63,14 +63,22 @@ self.addEventListener('push', (event) => {
     data: data.data,
     requireInteraction: data.requireInteraction,
     vibrate: data.vibrate,
+    silent: false, // Ensure notification makes sound
+    timestamp: Date.now(),
     actions: data.actions || []
   }).then(() => {
     console.log('[Service Worker] ✅ Notification shown successfully!');
+    console.log('[Service Worker] If you don\'t see it, check:');
+    console.log('[Service Worker] 1. Windows Settings → System → Notifications');
+    console.log('[Service Worker] 2. Windows Settings → Focus Assist (turn off)');
+    console.log('[Service Worker] 3. Browser notification settings');
+    console.log('[Service Worker] 4. Notification badge on Windows taskbar');
   }).catch((error) => {
     console.error('[Service Worker] ❌ Error showing notification:', error);
+    console.error('[Service Worker] Error name:', error.name);
+    console.error('[Service Worker] Error message:', error.message);
+    console.error('[Service Worker] Error stack:', error.stack);
   });
-
-  event.waitUntil(promiseChain);
 
   event.waitUntil(promiseChain);
 });
