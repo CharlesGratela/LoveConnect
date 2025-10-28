@@ -38,9 +38,16 @@ export async function POST(request: NextRequest) {
     const verificationToken = crypto.randomBytes(32).toString('hex');
     const verificationTokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
-    user.verificationToken = verificationToken;
-    user.verificationTokenExpiry = verificationTokenExpiry;
-    await user.save();
+    // Update without triggering validation
+    await User.updateOne(
+      { _id: user._id },
+      {
+        $set: {
+          verificationToken,
+          verificationTokenExpiry,
+        },
+      }
+    );
 
     // Send verification email
     const verificationUrl = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/auth/verify-email?token=${verificationToken}`;
