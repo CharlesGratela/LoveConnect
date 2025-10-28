@@ -27,11 +27,19 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(new URL('/verify-email?error=invalid-token', request.url));
     }
 
-    // Update user
-    user.isEmailVerified = true;
-    user.verificationToken = undefined;
-    user.verificationTokenExpiry = undefined;
-    await user.save();
+    // Update user without triggering validation
+    await User.updateOne(
+      { _id: user._id },
+      {
+        $set: {
+          isEmailVerified: true,
+        },
+        $unset: {
+          verificationToken: '',
+          verificationTokenExpiry: '',
+        },
+      }
+    );
 
     // Send welcome email
     await sendEmail({
