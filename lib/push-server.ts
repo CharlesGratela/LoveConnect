@@ -59,13 +59,20 @@ export async function sendPushNotificationToUser(
           },
         };
 
+        // Create a lightweight payload (max 4096 bytes for FCM)
+        const notificationPayload = {
+          title: payload.title,
+          body: payload.body,
+          icon: '/favicon.svg', // Use simple icon path instead of full URL
+          badge: '/favicon.svg',
+          tag: payload.tag,
+          data: payload.data,
+          requireInteraction: payload.requireInteraction || false,
+        };
+
         await webpush.sendNotification(
           pushSubscription,
-          JSON.stringify({
-            ...payload,
-            icon: payload.icon || '/favicon.svg',
-            badge: payload.badge || '/favicon.svg',
-          })
+          JSON.stringify(notificationPayload)
         );
 
         console.log('[Push Server] ✅ Notification sent successfully to:', sub.endpoint.substring(0, 50) + '...');
@@ -93,12 +100,11 @@ export async function sendPushNotificationToUser(
 export async function sendMatchNotification(
   userId: string,
   matchName: string,
-  matchPhoto: string
+  matchPhoto?: string // Optional, not used (kept for backwards compatibility)
 ): Promise<void> {
   await sendPushNotificationToUser(userId, {
     title: 'It\'s a Match! 💕',
     body: `You matched with ${matchName}!`,
-    icon: matchPhoto,
     tag: 'new-match',
     data: {
       type: 'match',
@@ -114,12 +120,11 @@ export async function sendMatchNotification(
 export async function sendLikeNotification(
   userId: string,
   likerName: string,
-  likerPhoto: string
+  likerPhoto?: string // Optional, not used (kept for backwards compatibility)
 ): Promise<void> {
   await sendPushNotificationToUser(userId, {
     title: 'Someone likes you! 💖',
     body: `${likerName} liked your profile!`,
-    icon: likerPhoto,
     tag: 'new-like',
     data: {
       type: 'like',
@@ -135,14 +140,16 @@ export async function sendLikeNotification(
 export async function sendMessageNotification(
   userId: string,
   senderName: string,
-  senderPhoto: string,
+  senderPhoto: string, // Kept for backwards compatibility but not used
   message: string,
   matchId: string
 ): Promise<void> {
+  // Truncate message to keep payload small
+  const truncatedMessage = message.length > 100 ? message.substring(0, 100) + '...' : message;
+  
   await sendPushNotificationToUser(userId, {
     title: `New message from ${senderName}`,
-    body: message.length > 50 ? message.substring(0, 50) + '...' : message,
-    icon: senderPhoto,
+    body: truncatedMessage,
     tag: 'new-message',
     data: {
       type: 'message',
