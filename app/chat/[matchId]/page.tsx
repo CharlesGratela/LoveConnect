@@ -7,6 +7,7 @@ import Header from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ArrowLeft, Send } from 'lucide-react';
+import { showMessageNotification, requestNotificationPermission } from '@/lib/notifications';
 
 interface Message {
   id: string;
@@ -46,6 +47,16 @@ export default function ChatPage() {
     if (matchId) {
       fetchMatch();
       fetchMessages();
+      
+      // Request notification permission
+      requestNotificationPermission();
+      
+      // Poll for new messages every 3 seconds
+      const interval = setInterval(() => {
+        fetchMessages();
+      }, 3000);
+      
+      return () => clearInterval(interval);
     }
   }, [matchId, isAuthenticated, authLoading, router]);
 
@@ -73,7 +84,23 @@ export default function ChatPage() {
       const response = await fetch(`/api/messages?matchId=${matchId}`);
       if (response.ok) {
         const data = await response.json();
-        setMessages(data.messages || []);
+        const newMessages = data.messages || [];
+        
+        // Check for new messages from the other user
+        if (messages.length > 0 && newMessages.length > messages.length && user && matchUser) {
+          const latestMessage = newMessages[newMessages.length - 1];
+          
+          // Only notify if the message is from the other person (not from current user)
+          if (latestMessage.senderId !== user.id) {
+            showMessageNotification(
+              matchUser.name,
+              latestMessage.text,
+              matchUser.profilePhoto
+            );
+          }
+        }
+        
+        setMessages(newMessages);
       }
     } catch (error) {
       console.error('Error fetching messages:', error);

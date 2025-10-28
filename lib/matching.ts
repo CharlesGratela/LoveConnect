@@ -43,14 +43,26 @@ export async function getRecommendedUsers(
   filters?: { minAge?: number; maxAge?: number; maxDistance?: number }
 ): Promise<any[]> {
   try {
+    console.log('[Matching] Starting search for user:', currentUserId);
+    console.log('[Matching] Filters:', filters);
+    
     const currentUser = await User.findById(currentUserId);
     if (!currentUser) {
       throw new Error('User not found');
     }
 
+    console.log('[Matching] Current user:', {
+      name: currentUser.name,
+      location: currentUser.location?.coordinates || 'No location',
+      gender: currentUser.gender,
+      genderPreference: currentUser.genderPreference,
+    });
+
     // Get users already liked or matched
     const likedUsers = await Like.find({ fromUserId: currentUserId }).select('toUserId');
     const likedUserIds = likedUsers.map((like) => like.toUserId.toString());
+    console.log('[Matching] Already liked:', likedUserIds.length);
+    
     // Get all matched users
     const matches = await Match.find({
       $or: [
@@ -64,8 +76,12 @@ export async function getRecommendedUsers(
         : match.user1Id.toString();
       return matchedId;
     });
+    console.log('[Matching] Already matched:', matchedUserIds.length);
+    
     // Exclude already interacted users
     const excludedIds = [...likedUserIds, ...matchedUserIds, currentUserId];
+    console.log('[Matching] Total excluded:', excludedIds.length);
+    
     // Build query with age filter
     const query: any = {
       _id: { $nin: excludedIds.map(id => new mongoose.Types.ObjectId(id)) },
@@ -81,6 +97,7 @@ export async function getRecommendedUsers(
     // Gender preference filter
     if (currentUser.genderPreference && currentUser.genderPreference !== 'both') {
       query.gender = currentUser.genderPreference;
+      console.log('[Matching] Filter by gender:', currentUser.genderPreference);
     }
     // Filter by users interested in currentUser's gender
     if (currentUser.gender) {
@@ -88,25 +105,44 @@ export async function getRecommendedUsers(
         { genderPreference: currentUser.gender },
         { genderPreference: 'both' }
       ];
+      console.log('[Matching] Filter by users interested in:', currentUser.gender);
     }
+
+    console.log('[Matching] MongoDB query:', JSON.stringify(query, null, 2));
+    
     // Get candidate users
     const candidates = await User.find(query).limit(50); // Get more candidates for better filtering
+    console.log('[Matching] Found', candidates.length, 'candidates before distance filter');
+    
     if (candidates.length === 0) {
+      console.log('[Matching] No candidates found with current filters');
       return [];
     }
     // Filter by distance if location is available
     let filteredCandidates = candidates;
     if (filters?.maxDistance && currentUser.location?.coordinates) {
       const [currentLon, currentLat] = currentUser.location.coordinates;
+      console.log('[Matching] Applying distance filter: max', filters.maxDistance, 'km from', [currentLat, currentLon]);
+      
       filteredCandidates = candidates.filter(candidate => {
-        if (!candidate.location?.coordinates) return false;
+        if (!candidate.location?.coordinates) {
+          console.log('[Matching] Candidate', candidate.name, 'has no location');
+          return false;
+        }
         const [candLon, candLat] = candidate.location.coordinates;
         const distance = calculateDistance(currentLat, currentLon, candLat, candLon);
+        console.log('[Matching] Distance to', candidate.name, ':', distance.toFixed(2), 'km');
         return distance <= filters.maxDistance!;
       });
+      
+      console.log('[Matching] After distance filter:', filteredCandidates.length, 'candidates');
+      
       if (filteredCandidates.length === 0) {
+        console.log('[Matching] No candidates within', filters.maxDistance, 'km. Try increasing max distance.');
         return [];
       }
+    } else {
+      console.log('[Matching] No distance filter applied');
     }
     // Generate embedding for current user
     const currentUserProfile: UserProfile = {
@@ -117,6 +153,8 @@ export async function getRecommendedUsers(
       interests: currentUser.interests,
     };
     const currentUserEmbedding = await generateUserEmbedding(currentUserProfile);
+    console.log('[Matching] Generated embeddings for current user');
+    
     // Calculate similarity scores for all candidates
     const scoredCandidates = await Promise.all(
       filteredCandidates.map(async (candidate) => {
@@ -144,6 +182,11 @@ export async function getRecommendedUsers(
     );
     // Sort by score and return top matches
     scoredCandidates.sort((a, b) => b.score - a.score);
+    console.log('[Matching] Top 5 matches:', scoredCandidates.slice(0, 5).map(c => ({
+      name: c.user.name,
+      score: c.score.toFixed(3)
+    })));
+    
     const results = scoredCandidates.slice(0, limit).map((item) => {
       let distance;
       if (currentUser.location?.coordinates && item.user.location?.coordinates) {
@@ -161,8 +204,11 @@ export async function getRecommendedUsers(
         distance,
       };
     });
+    
+    console.log('[Matching] Returning', results.length, 'matches');
     return results;
   } catch (error) {
+    console.error('[Matching] Error:', error);
     throw error;
   }
 }

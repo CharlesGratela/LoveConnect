@@ -29,7 +29,7 @@ export default function DiscoverPage() {
   const [loading, setLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
   const [ageRange, setAgeRange] = useState([18, 100]);
-  const [maxDistance, setMaxDistance] = useState(100); // km
+  const [maxDistance, setMaxDistance] = useState(20000); // km - worldwide by default
   const { isAuthenticated, loading: authLoading } = useAuth();
   const router = useRouter();
 
@@ -53,12 +53,24 @@ export default function DiscoverPage() {
         maxAge: ageRange[1].toString(),
         maxDistance: maxDistance.toString(),
       });
+      
+      console.log('[Discover] Fetching users with filters:', { 
+        ageRange, 
+        maxDistance: maxDistance >= 20000 ? 'Worldwide' : `${maxDistance}km` 
+      });
+      
       const response = await fetch(`/api/discover?${params}`, {
         credentials: 'include',
       });
+      
+      console.log('[Discover] Response status:', response.status);
+      
       if (response.ok) {
         const data = await response.json();
+        console.log('[Discover] Received', data.users?.length || 0, 'users');
+        
         if (data.users && data.users.length > 0) {
+          console.log('[Discover] First user:', data.users[0]?.name, 'Distance:', data.users[0]?.distance);
         } else {
           toast.info('No matches found. Try adjusting your filters.');
         }
@@ -78,7 +90,7 @@ export default function DiscoverPage() {
   };
   const resetFilters = () => {
     setAgeRange([18, 100]);
-    setMaxDistance(100);
+    setMaxDistance(20000); // Reset to worldwide
   };
   const handleSwipe = async (direction: 'left' | 'right') => {
     if (currentIndex >= users.length) return;
@@ -96,6 +108,8 @@ export default function DiscoverPage() {
       if (response.ok) {
         const data = await response.json();
         if (data.matched) {
+          console.log('[Discover] Match detected with:', currentUser.name);
+          
           // Show toast notification
           toast.success(
             <div className="flex items-center gap-2">
@@ -209,7 +223,7 @@ export default function DiscoverPage() {
           </Button>
         </div>
         {showFilters && (
-          <Card className="p-4 mb-4 animate-slide-up">
+          <Card className="p-4 mb-4 animate-slide-up shadow-lg border-2">
             <div className="space-y-4">
               <div>
                 <div className="flex items-center justify-between mb-2">
@@ -234,23 +248,81 @@ export default function DiscoverPage() {
               </div>
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <Label>Max Distance: {maxDistance} km</Label>
+                  <Label>Max Distance: {maxDistance >= 20000 ? 'Worldwide' : `${maxDistance} km`}</Label>
                 </div>
                 <Slider
                   value={[maxDistance]}
                   onValueChange={(value) => setMaxDistance(value[0])}
                   min={1}
-                  max={500}
-                  step={5}
+                  max={20000}
+                  step={maxDistance < 1000 ? 10 : 100}
                   className="mt-2"
                 />
+                <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                  <span>1 km</span>
+                  <span>Worldwide</span>
+                </div>
+                <div className="flex gap-2 mt-2 flex-wrap">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setMaxDistance(50)}
+                    className="text-xs"
+                  >
+                    50km
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setMaxDistance(100)}
+                    className="text-xs"
+                  >
+                    100km
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setMaxDistance(500)}
+                    className="text-xs"
+                  >
+                    500km
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setMaxDistance(20000)}
+                    className="text-xs"
+                  >
+                    Worldwide
+                  </Button>
+                </div>
+              </div>
+              <div className="flex gap-2 pt-2">
+                <Button
+                  onClick={() => {
+                    fetchUsers();
+                    setShowFilters(false);
+                  }}
+                  className="flex-1"
+                >
+                  Apply Filters
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    resetFilters();
+                    setShowFilters(false);
+                  }}
+                >
+                  Cancel
+                </Button>
               </div>
             </div>
           </Card>
         )}
         <div className="flex items-center justify-center py-8">
           <div
-            className="relative w-full max-w-sm h-[450px]"
+            className="relative w-full max-w-sm h-[550px]"
             onMouseMove={handleMouseMove}
           >
             {/* Next card preview */}
