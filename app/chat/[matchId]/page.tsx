@@ -58,7 +58,7 @@ export default function ChatPage() {
       const response = await fetch('/api/matches');
       if (response.ok) {
         const data = await response.json();
-        const match = data.matches.find((m: any) => m.user.id === matchId);
+        const match = data.matches.find((m: any) => m.id === matchId);
         if (match) {
           setMatchUser(match.user);
         }

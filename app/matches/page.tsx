@@ -158,7 +158,7 @@ export default function MatchesPage() {
                 <div className="flex gap-2">
                   <Button
                     className="flex-1 gradient-primary"
-                    onClick={() => handleChat(match.user.id)}
+                    onClick={() => handleChat(match.id)}
                   >
                     <MessageCircle className="mr-2 h-4 w-4" />
                     Chat
