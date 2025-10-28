@@ -10,41 +10,35 @@ import Link from 'next/link';
 function VerifyEmailContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const token = searchParams.get('token');
+  const success = searchParams.get('success');
+  const error = searchParams.get('error');
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [message, setMessage] = useState('');
 
   useEffect(() => {
-    if (!token) {
+    // Check if we have success or error parameters
+    if (success === 'true') {
+      setStatus('success');
+      setMessage('Your email has been verified successfully!');
+      // Redirect to login after 3 seconds
+      setTimeout(() => {
+        router.push('/auth');
+      }, 3000);
+    } else if (error) {
       setStatus('error');
-      setMessage('Verification token is missing');
-      return;
-    }
-
-    verifyEmail();
-  }, [token]);
-
-  const verifyEmail = async () => {
-    try {
-      const response = await fetch(`/api/auth/verify-email?token=${token}`);
-      const data = await response.json();
-
-      if (response.ok) {
-        setStatus('success');
-        setMessage(data.message);
-        // Redirect to login after 3 seconds
-        setTimeout(() => {
-          router.push('/auth');
-        }, 3000);
+      if (error === 'missing-token') {
+        setMessage('Verification token is missing');
+      } else if (error === 'invalid-token') {
+        setMessage('Invalid or expired verification token');
       } else {
-        setStatus('error');
-        setMessage(data.message);
+        setMessage('An error occurred during verification');
       }
-    } catch (error) {
+    } else {
+      // No success or error param means we shouldn't be here
       setStatus('error');
-      setMessage('An error occurred during verification');
+      setMessage('Invalid verification link');
     }
-  };
+  }, [success, error, router]);
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 gradient-bg">
