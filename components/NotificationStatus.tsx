@@ -3,12 +3,16 @@
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Bell, BellOff, AlertCircle } from 'lucide-react';
-import { requestNotificationPermission } from '@/lib/notifications';
+import { Bell, BellOff, AlertCircle, RefreshCw } from 'lucide-react';
+import { requestNotificationPermission, subscribeToPushNotifications } from '@/lib/notifications';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 
 export default function NotificationStatus() {
   const [permission, setPermission] = useState<NotificationPermission>('default');
   const [supported, setSupported] = useState(true);
+  const [subscribing, setSubscribing] = useState(false);
+  const { user } = useAuth();
 
   useEffect(() => {
     if ('Notification' in window) {
@@ -20,8 +24,39 @@ export default function NotificationStatus() {
   }, []);
 
   const handleEnableNotifications = async () => {
-    const result = await requestNotificationPermission();
-    setPermission(result);
+    setSubscribing(true);
+    try {
+      const result = await requestNotificationPermission();
+      setPermission(result);
+      
+      if (result === 'granted' && user?.id) {
+        await subscribeToPushNotifications(user.id);
+        toast.success('Push notifications enabled!');
+      }
+    } catch (error) {
+      console.error('[NotificationStatus] Error enabling notifications:', error);
+      toast.error('Failed to enable notifications');
+    } finally {
+      setSubscribing(false);
+    }
+  };
+
+  const handleResubscribe = async () => {
+    if (!user?.id) {
+      toast.error('Please login first');
+      return;
+    }
+
+    setSubscribing(true);
+    try {
+      await subscribeToPushNotifications(user.id);
+      toast.success('Resubscribed to push notifications!');
+    } catch (error) {
+      console.error('[NotificationStatus] Error resubscribing:', error);
+      toast.error('Failed to resubscribe');
+    } finally {
+      setSubscribing(false);
+    }
   };
 
   const handleTestNotification = () => {
@@ -75,8 +110,8 @@ export default function NotificationStatus() {
               Get notified about matches, likes, and messages
             </p>
           </div>
-          <Button onClick={handleEnableNotifications} size="sm">
-            Enable
+          <Button onClick={handleEnableNotifications} size="sm" disabled={subscribing}>
+            {subscribing ? 'Enabling...' : 'Enable'}
           </Button>
         </div>
       </Card>
@@ -93,9 +128,20 @@ export default function NotificationStatus() {
             You&apos;ll receive notifications for matches, likes, and messages
           </p>
         </div>
-        <Button onClick={handleTestNotification} variant="outline" size="sm">
-          Test
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            onClick={handleResubscribe} 
+            variant="outline" 
+            size="sm"
+            disabled={subscribing}
+            title="Resubscribe to push notifications"
+          >
+            <RefreshCw className="h-4 w-4" />
+          </Button>
+          <Button onClick={handleTestNotification} variant="outline" size="sm">
+            Test
+          </Button>
+        </div>
       </div>
     </Card>
   );

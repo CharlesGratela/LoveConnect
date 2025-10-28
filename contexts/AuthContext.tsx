@@ -71,6 +71,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (typeof window !== 'undefined') {
           localStorage.setItem('auth-user', JSON.stringify(data.user));
         }
+
+        // Subscribe to push notifications if permission already granted
+        if (data.user?.id && typeof window !== 'undefined' && 'Notification' in window) {
+          if (Notification.permission === 'granted') {
+            subscribeToPushNotifications(data.user.id).catch(err => 
+              console.error('[Auth] Error subscribing to push:', err)
+            );
+          }
+        }
       } else {
         const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
         console.error('[Auth] Authentication failed:', response.status, errorData);
