@@ -2,21 +2,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import User from '@/models/User';
 import { getUserFromToken } from '@/lib/auth';
-
 export async function GET(request: NextRequest) {
   try {
-    console.log('[API /users/profile] Getting profile...');
     await dbConnect();
-
     const tokenData = await getUserFromToken();
     if (!tokenData) {
-      console.log('[API /users/profile] Unauthorized - no valid token');
       return NextResponse.json(
         { message: 'Unauthorized' },
         { status: 401 }
       );
     }
-
     const user = await User.findById(tokenData.userId).select('-password');
     if (!user) {
       console.error('[API /users/profile] User not found:', tokenData.userId);
@@ -25,9 +20,6 @@ export async function GET(request: NextRequest) {
         { status: 404 }
       );
     }
-
-    console.log('[API /users/profile] Profile retrieved for:', user.email);
-
     const userResponse = {
       id: String(user._id),
       email: user.email,
@@ -40,7 +32,6 @@ export async function GET(request: NextRequest) {
       genderPreference: user.genderPreference,
       location: user.location,
     };
-
     return NextResponse.json({ user: userResponse });
   } catch (error: any) {
     console.error('[API /users/profile] Get profile error:', error);
@@ -50,26 +41,18 @@ export async function GET(request: NextRequest) {
     );
   }
 }
-
 export async function PUT(request: NextRequest) {
   try {
-    console.log('[API /users/profile] Starting profile update...');
     await dbConnect();
-
     const tokenData = await getUserFromToken();
     if (!tokenData) {
-      console.log('[API /users/profile] Unauthorized - no valid token');
       return NextResponse.json(
         { message: 'Unauthorized' },
         { status: 401 }
       );
     }
-
     const body = await request.json();
-    console.log('[API /users/profile] Update request body:', Object.keys(body));
-    
     const { name, age, bio, profilePhoto, interests, gender, genderPreference, location } = body;
-
     // Build update object
     const updateData: any = {};
     if (name) updateData.name = name;
@@ -80,16 +63,12 @@ export async function PUT(request: NextRequest) {
     if (gender) updateData.gender = gender;
     if (genderPreference) updateData.genderPreference = genderPreference;
     if (location) updateData.location = location;
-
-    console.log('[API /users/profile] Updating fields:', Object.keys(updateData));
-
     // Update user
     const user = await User.findByIdAndUpdate(
       tokenData.userId,
       { $set: updateData },
       { new: true, runValidators: false } // Don't run validators to avoid gender required error
     ).select('-password');
-
     if (!user) {
       console.error('[API /users/profile] User not found:', tokenData.userId);
       return NextResponse.json(
@@ -97,9 +76,6 @@ export async function PUT(request: NextRequest) {
         { status: 404 }
       );
     }
-
-    console.log('[API /users/profile] Profile updated successfully for:', user.email);
-
     const userResponse = {
       id: String(user._id),
       email: user.email,
@@ -112,7 +88,6 @@ export async function PUT(request: NextRequest) {
       genderPreference: user.genderPreference,
       location: user.location,
     };
-
     return NextResponse.json({ user: userResponse });
   } catch (error: any) {
     console.error('[API /users/profile] Update profile error:', error);

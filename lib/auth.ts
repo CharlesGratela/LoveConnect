@@ -43,16 +43,9 @@ export async function setAuthCookie(token: string) {
     maxAge: 60 * 60 * 24 * 7, // 7 days
     path: '/',
   });
-  
-  console.log('[Auth] Cookie set:', { 
-    isProduction, 
-    secure: isProduction, 
-    sameSite: isProduction ? 'none' : 'lax' 
-  });
 }
 
 export async function removeAuthCookie() {
   const cookieStore = await cookies();
   cookieStore.delete('auth-token');
-  console.log('[Auth] Cookie removed');
 }

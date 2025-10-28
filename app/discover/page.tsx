@@ -1,5 +1,4 @@
 'use client';
-
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
@@ -12,7 +11,6 @@ import { Card } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { Sparkles, SlidersHorizontal, X } from 'lucide-react';
 import { requestNotificationPermission, showMatchNotification } from '@/lib/notifications';
-
 interface User {
   id: string;
   name: string;
@@ -22,7 +20,6 @@ interface User {
   interests: string[];
   distance?: number;
 }
-
 export default function DiscoverPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -33,41 +30,29 @@ export default function DiscoverPage() {
   const [showFilters, setShowFilters] = useState(false);
   const [ageRange, setAgeRange] = useState([18, 100]);
   const [maxDistance, setMaxDistance] = useState(100); // km
-
   const { isAuthenticated, loading: authLoading } = useAuth();
   const router = useRouter();
-
-  console.log('[Discover] Auth state:', { isAuthenticated, authLoading });
-  console.log('[Discover] Component state:', { 
     usersCount: users.length, 
     currentIndex, 
     loading,
     hasCurrentUser: currentIndex < users.length,
     currentUser: users[currentIndex]?.name
   });
-
   useEffect(() => {
     // Wait for auth to load before redirecting
     if (authLoading) {
-      console.log('[Discover] Waiting for auth to load...');
       return;
     }
-    
     if (!isAuthenticated) {
-      console.log('[Discover] Not authenticated, redirecting to /auth');
       router.push('/auth');
       return;
     }
-    
-    console.log('[Discover] Authenticated, fetching users');
     fetchUsers();
     // Request notification permission
     requestNotificationPermission();
   }, [isAuthenticated, authLoading, router, ageRange, maxDistance]);
-
   const fetchUsers = async () => {
     try {
-      console.log('[Discover] Fetching users with filters:', { ageRange, maxDistance });
       const params = new URLSearchParams({
         minAge: ageRange[0].toString(),
         maxAge: ageRange[1].toString(),
@@ -76,20 +61,12 @@ export default function DiscoverPage() {
       const response = await fetch(`/api/discover?${params}`, {
         credentials: 'include',
       });
-      
-      console.log('[Discover] Response status:', response.status);
-      
       if (response.ok) {
         const data = await response.json();
-        console.log('[Discover] Received', data.users?.length || 0, 'users');
-        
         if (data.users && data.users.length > 0) {
-          console.log('[Discover] First user:', data.users[0]);
         } else {
-          console.warn('[Discover] No users found. Try adjusting filters.');
           toast.info('No matches found. Try adjusting your filters.');
         }
-        
         setUsers(data.users || []);
         setCurrentIndex(0);
       } else {
@@ -104,18 +81,14 @@ export default function DiscoverPage() {
       setLoading(false);
     }
   };
-
   const resetFilters = () => {
     setAgeRange([18, 100]);
     setMaxDistance(100);
   };
-
   const handleSwipe = async (direction: 'left' | 'right') => {
     if (currentIndex >= users.length) return;
-
     const currentUser = users[currentIndex];
     const action = direction === 'right' ? 'like' : 'dislike';
-
     try {
       const response = await fetch('/api/swipe', {
         method: 'POST',
@@ -125,10 +98,8 @@ export default function DiscoverPage() {
           action,
         }),
       });
-
       if (response.ok) {
         const data = await response.json();
-        
         if (data.matched) {
           // Show toast notification
           toast.success(
@@ -138,7 +109,6 @@ export default function DiscoverPage() {
             </div>,
             { duration: 3000 }
           );
-          
           // Show browser push notification
           showMatchNotification(currentUser.name, currentUser.profilePhoto);
         } else if (action === 'like') {
@@ -148,28 +118,22 @@ export default function DiscoverPage() {
     } catch (error) {
       console.error('Swipe error:', error);
     }
-
     setCurrentIndex((prev) => prev + 1);
     setDragOffset({ x: 0, y: 0 });
   };
-
   const handleMouseDown = (e: React.MouseEvent) => {
     setDragStart({ x: e.clientX, y: e.clientY });
     setIsDragging(true);
   };
-
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!isDragging) return;
-    
     const deltaX = e.clientX - dragStart.x;
     const deltaY = e.clientY - dragStart.y;
     setDragOffset({ x: deltaX, y: deltaY });
   };
-
   const handleMouseUp = () => {
     if (!isDragging) return;
     setIsDragging(false);
-
     const threshold = 100;
     if (Math.abs(dragOffset.x) > threshold) {
       handleSwipe(dragOffset.x > 0 ? 'right' : 'left');
@@ -177,21 +141,17 @@ export default function DiscoverPage() {
       setDragOffset({ x: 0, y: 0 });
     }
   };
-
   useEffect(() => {
     const handleGlobalMouseUp = () => {
       if (isDragging) {
         handleMouseUp();
       }
     };
-
     window.addEventListener('mouseup', handleGlobalMouseUp);
     return () => window.removeEventListener('mouseup', handleGlobalMouseUp);
   }, [isDragging, dragOffset]);
-
   // Show loading while auth is being checked
   if (authLoading) {
-    console.log('[Discover] Rendering auth loading state');
     return (
       <>
         <Header />
@@ -204,9 +164,7 @@ export default function DiscoverPage() {
       </>
     );
   }
-
   if (loading) {
-    console.log('[Discover] Rendering loading state');
     return (
       <>
         <Header />
@@ -219,9 +177,7 @@ export default function DiscoverPage() {
       </>
     );
   }
-
   if (currentIndex >= users.length || users.length === 0) {
-    console.log('[Discover] Rendering empty state - currentIndex:', currentIndex, 'users.length:', users.length);
     return (
       <>
         <Header />
@@ -239,12 +195,9 @@ export default function DiscoverPage() {
       </>
     );
   }
-
   const currentUser = users[currentIndex];
-  console.log('[Discover] Rendering user card:', currentUser?.name);
   const rotation = dragOffset.x * 0.1;
   const opacity = 1 - Math.abs(dragOffset.x) / 500;
-
   return (
     <>
       <Header />
@@ -260,7 +213,6 @@ export default function DiscoverPage() {
             Filters
           </Button>
         </div>
-
         {showFilters && (
           <Card className="p-4 mb-4 animate-slide-up">
             <div className="space-y-4">
@@ -285,7 +237,6 @@ export default function DiscoverPage() {
                   className="mt-2"
                 />
               </div>
-              
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <Label>Max Distance: {maxDistance} km</Label>
@@ -302,7 +253,6 @@ export default function DiscoverPage() {
             </div>
           </Card>
         )}
-
         <div className="flex items-center justify-center py-8">
           <div
             className="relative w-full max-w-sm h-[450px]"
@@ -317,7 +267,6 @@ export default function DiscoverPage() {
                 />
               </div>
             )}
-
             {/* Current card */}
             <div
               className="absolute inset-0 z-10"
@@ -334,7 +283,6 @@ export default function DiscoverPage() {
                 isDragging={isDragging}
               />
             </div>
-
             {/* Swipe indicators */}
             {isDragging && Math.abs(dragOffset.x) > 50 && (
               <div className="absolute top-8 left-0 right-0 flex justify-center pointer-events-none">

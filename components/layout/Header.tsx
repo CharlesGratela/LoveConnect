@@ -24,37 +24,38 @@ const Header = () => {
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between">
         <Link href="/discover" className="flex items-center gap-2 transition-smooth hover:scale-105">
-          <img src="/logo.svg" alt="nXtDate" className="h-12" />
+          <img src="/favicon.svg" alt="nXtDate" className="h-8 md:hidden" />
+          <img src="/logo.svg" alt="nXtDate" className="h-12 hidden md:block" />
         </Link>
 
-        <nav className="flex items-center gap-4">
+        <nav className="flex items-center gap-2 md:gap-4">
           <Link href="/discover">
             <Button
               variant={isActive('/discover') ? 'default' : 'ghost'}
-              size="icon"
               className="transition-smooth"
             >
-              <Heart className={isActive('/discover') ? 'fill-current' : ''} />
+              <Heart className={`h-5 w-5 ${isActive('/discover') ? 'fill-current' : ''}`} />
+              <span className="ml-2 hidden md:inline">Discover</span>
             </Button>
           </Link>
 
           <Link href="/matches">
             <Button
               variant={isActive('/matches') ? 'default' : 'ghost'}
-              size="icon"
               className="transition-smooth"
             >
-              <MessageCircle className={isActive('/matches') ? 'fill-current' : ''} />
+              <MessageCircle className={`h-5 w-5 ${isActive('/matches') ? 'fill-current' : ''}`} />
+              <span className="ml-2 hidden md:inline">Matches</span>
             </Button>
           </Link>
 
           <Link href="/profile">
             <Button
               variant={isActive('/profile') ? 'default' : 'ghost'}
-              size="icon"
               className="transition-smooth"
             >
-              <User className={isActive('/profile') ? 'fill-current' : ''} />
+              <User className={`h-5 w-5 ${isActive('/profile') ? 'fill-current' : ''}`} />
+              <span className="ml-2 hidden md:inline">Profile</span>
             </Button>
           </Link>
 
@@ -84,11 +85,11 @@ const Header = () => {
 
           <Button
             variant="ghost"
-            size="icon"
             onClick={logout}
             className="transition-smooth hover:text-destructive"
           >
-            <LogOut />
+            <LogOut className="h-5 w-5" />
+            <span className="ml-2 hidden md:inline">Logout</span>
           </Button>
         </nav>
       </div>

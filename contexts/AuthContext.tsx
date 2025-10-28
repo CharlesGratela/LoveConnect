@@ -57,17 +57,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const checkAuth = async () => {
     try {
-      console.log('[Auth] Checking authentication status...');
       const response = await fetch('/api/auth/me', {
         credentials: 'include', // Important: include cookies
         cache: 'no-store',
       });
       
-      console.log('[Auth] Response status:', response.status);
-      
       if (response.ok) {
         const data = await response.json();
-        console.log('[Auth] User authenticated:', data.user?.email);
         setUser(data.user);
         
         // Store user in localStorage as backup
@@ -82,7 +78,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (typeof window !== 'undefined') {
           const storedUser = localStorage.getItem('auth-user');
           if (storedUser) {
-            console.log('[Auth] Restoring user from localStorage');
             setUser(JSON.parse(storedUser));
           } else {
             setUser(null);
@@ -98,7 +93,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (typeof window !== 'undefined') {
         const storedUser = localStorage.getItem('auth-user');
         if (storedUser) {
-          console.log('[Auth] Restoring user from localStorage after error');
           setUser(JSON.parse(storedUser));
         } else {
           setUser(null);
@@ -112,7 +106,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const login = async (email: string, password: string) => {
-    console.log('[Auth] Attempting login for:', email);
     const response = await fetch('/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -127,7 +120,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
 
     const data = await response.json();
-    console.log('[Auth] Login successful:', data.user?.email);
     setUser(data.user);
     
     // Store user in localStorage
@@ -137,7 +129,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const register = async (data: Omit<User, 'id'> & { password: string }) => {
-    console.log('[Auth] Attempting registration for:', data.email);
     const response = await fetch('/api/auth/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -152,7 +143,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
 
     const result = await response.json();
-    console.log('[Auth] Registration successful:', result.user?.email);
     setUser(result.user);
     
     // Store user in localStorage
@@ -163,7 +153,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = async () => {
     try {
-      console.log('[Auth] Logging out...');
       await fetch('/api/auth/logout', { 
         method: 'POST',
         credentials: 'include',
@@ -175,7 +164,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         localStorage.removeItem('auth-user');
       }
       
-      console.log('[Auth] Logout successful');
       router.push('/');
     } catch (error) {
       console.error('[Auth] Logout failed:', error);
@@ -184,7 +172,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const updateProfile = async (data: Partial<User>) => {
     try {
-      console.log('[Auth] Updating profile...');
       const response = await fetch('/api/users/profile', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -194,7 +181,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (response.ok) {
         const result = await response.json();
-        console.log('[Auth] Profile updated successfully');
         setUser(result.user);
         
         // Update localStorage

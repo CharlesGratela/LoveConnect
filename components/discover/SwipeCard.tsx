@@ -1,10 +1,8 @@
 'use client';
-
 import { useState } from 'react';
 import { MapPin, Heart, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-
 interface User {
   id: string;
   name: string;
@@ -14,19 +12,14 @@ interface User {
   interests: string[];
   distance?: number;
 }
-
 interface SwipeCardProps {
   user: User;
   onSwipe: (direction: 'left' | 'right') => void;
   style?: React.CSSProperties;
   isDragging?: boolean;
 }
-
 const SwipeCard = ({ user, onSwipe, style, isDragging }: SwipeCardProps) => {
   const [imageLoaded, setImageLoaded] = useState(false);
-
-  console.log('[SwipeCard] Rendering card for:', user.name, 'Image loaded:', imageLoaded);
-
   return (
     <div
       className="absolute inset-0 select-none"
@@ -50,7 +43,6 @@ const SwipeCard = ({ user, onSwipe, style, isDragging }: SwipeCardProps) => {
             }`}
             style={{ maxHeight: '100%' }}
             onLoad={() => {
-              console.log('[SwipeCard] Image loaded for:', user.name);
               setImageLoaded(true);
             }}
             onError={(e) => {
@@ -60,10 +52,8 @@ const SwipeCard = ({ user, onSwipe, style, isDragging }: SwipeCardProps) => {
             }}
             draggable={false}
           />
-
           {/* Gradient Overlay */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
-
           {/* User Info */}
           <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
             <div className="flex items-end justify-between mb-2">
@@ -79,9 +69,7 @@ const SwipeCard = ({ user, onSwipe, style, isDragging }: SwipeCardProps) => {
                 )}
               </div>
             </div>
-
             <p className="text-white/90 text-xs mb-2 line-clamp-2">{user.bio}</p>
-
             <div className="flex flex-wrap gap-1 mb-3">
               {user.interests.slice(0, 4).map((interest) => (
                 <Badge
@@ -98,7 +86,6 @@ const SwipeCard = ({ user, onSwipe, style, isDragging }: SwipeCardProps) => {
                 </Badge>
               )}
             </div>
-
             {/* Action Buttons */}
             <div className="flex items-center justify-center gap-3 mt-3">
               <Button
@@ -112,7 +99,6 @@ const SwipeCard = ({ user, onSwipe, style, isDragging }: SwipeCardProps) => {
               >
                 <X className="h-6 w-6 text-destructive" />
               </Button>
-
               <Button
                 size="lg"
                 className="h-14 w-14 rounded-full gradient-primary hover:scale-110 transition-smooth shadow-lg shadow-primary/50"
@@ -130,5 +116,4 @@ const SwipeCard = ({ user, onSwipe, style, isDragging }: SwipeCardProps) => {
     </div>
   );
 };
-
 export default SwipeCard;

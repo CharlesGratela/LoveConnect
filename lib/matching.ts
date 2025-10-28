@@ -4,11 +4,9 @@ import Like from '@/models/Like';
 import Match from '@/models/Match';
 import mongoose from 'mongoose';
 import { calculateDistance } from './geolocation';
-
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
-
 interface UserProfile {
   userId: string;
   name: string;
@@ -16,21 +14,17 @@ interface UserProfile {
   bio: string;
   interests: string[];
 }
-
 /**
  * Generate embedding for user profile using OpenAI
  */
 export async function generateUserEmbedding(profile: UserProfile): Promise<number[]> {
   const profileText = `Name: ${profile.name}, Age: ${profile.age}, Bio: ${profile.bio}, Interests: ${profile.interests.join(', ')}`;
-  
   const response = await openai.embeddings.create({
     model: 'text-embedding-3-small',
     input: profileText,
   });
-
   return response.data[0].embedding;
 }
-
 /**
  * Calculate cosine similarity between two vectors
  */
@@ -38,10 +32,8 @@ function cosineSimilarity(vecA: number[], vecB: number[]): number {
   const dotProduct = vecA.reduce((sum, a, i) => sum + a * vecB[i], 0);
   const magnitudeA = Math.sqrt(vecA.reduce((sum, a) => sum + a * a, 0));
   const magnitudeB = Math.sqrt(vecB.reduce((sum, b) => sum + b * b, 0));
-  
   return dotProduct / (magnitudeA * magnitudeB);
 }
-
 /**
  * Get recommended users using AI embeddings and collaborative filtering
  */
@@ -51,16 +43,10 @@ export async function getRecommendedUsers(
   filters?: { minAge?: number; maxAge?: number; maxDistance?: number }
 ): Promise<any[]> {
   try {
-    console.log('[Matching] Starting recommendation search for user:', currentUserId);
-    console.log('[Matching] Filters:', filters);
-    
     const currentUser = await User.findById(currentUserId);
     if (!currentUser) {
-      console.error('[Matching] Current user not found:', currentUserId);
       throw new Error('User not found');
     }
-
-    console.log('[Matching] Current user:', {
       name: currentUser.name,
       age: currentUser.age,
       gender: currentUser.gender,
@@ -68,12 +54,9 @@ export async function getRecommendedUsers(
       location: currentUser.location?.coordinates ? 'Yes' : 'No',
       interests: currentUser.interests.length,
     });
-
     // Get users already liked or matched
     const likedUsers = await Like.find({ fromUserId: currentUserId }).select('toUserId');
     const likedUserIds = likedUsers.map((like) => like.toUserId.toString());
-    console.log('[Matching] Already liked users:', likedUserIds.length);
-    
     // Get all matched users
     const matches = await Match.find({
       $or: [
@@ -81,83 +64,56 @@ export async function getRecommendedUsers(
         { user2Id: currentUserId },
       ],
     });
-    
     const matchedUserIds = matches.map((match) => {
       const matchedId = match.user1Id.toString() === currentUserId 
         ? match.user2Id.toString() 
         : match.user1Id.toString();
       return matchedId;
     });
-    console.log('[Matching] Already matched users:', matchedUserIds.length);
-
     // Exclude already interacted users
     const excludedIds = [...likedUserIds, ...matchedUserIds, currentUserId];
-    console.log('[Matching] Total excluded users:', excludedIds.length);
-
     // Build query with age filter
     const query: any = {
       _id: { $nin: excludedIds.map(id => new mongoose.Types.ObjectId(id)) },
     };
-
     if (filters?.minAge) {
       query.age = query.age || {};
       query.age.$gte = filters.minAge;
     }
-
     if (filters?.maxAge) {
       query.age = query.age || {};
       query.age.$lte = filters.maxAge;
     }
-
     // Gender preference filter
     if (currentUser.genderPreference && currentUser.genderPreference !== 'both') {
       query.gender = currentUser.genderPreference;
-      console.log('[Matching] Filtering by gender:', currentUser.genderPreference);
     }
-
     // Filter by users interested in currentUser's gender
     if (currentUser.gender) {
       query.$or = [
         { genderPreference: currentUser.gender },
         { genderPreference: 'both' }
       ];
-      console.log('[Matching] Filtering by users interested in:', currentUser.gender);
     }
-
-    console.log('[Matching] Query:', JSON.stringify(query, null, 2));
-
     // Get candidate users
     const candidates = await User.find(query).limit(50); // Get more candidates for better filtering
-    console.log('[Matching] Found candidates:', candidates.length);
-
     if (candidates.length === 0) {
-      console.warn('[Matching] No candidates found with current filters');
       return [];
     }
-
     // Filter by distance if location is available
     let filteredCandidates = candidates;
     if (filters?.maxDistance && currentUser.location?.coordinates) {
       const [currentLon, currentLat] = currentUser.location.coordinates;
-      console.log('[Matching] Filtering by distance:', filters.maxDistance, 'km from', [currentLat, currentLon]);
-      
       filteredCandidates = candidates.filter(candidate => {
         if (!candidate.location?.coordinates) return false;
         const [candLon, candLat] = candidate.location.coordinates;
         const distance = calculateDistance(currentLat, currentLon, candLat, candLon);
         return distance <= filters.maxDistance!;
       });
-
-      console.log('[Matching] Candidates after distance filter:', filteredCandidates.length);
-
       if (filteredCandidates.length === 0) {
-        console.warn('[Matching] No candidates within distance:', filters.maxDistance, 'km');
         return [];
       }
     }
-
-    console.log('[Matching] Generating AI embeddings for', filteredCandidates.length, 'candidates...');
-
     // Generate embedding for current user
     const currentUserProfile: UserProfile = {
       userId: (currentUser._id as mongoose.Types.ObjectId).toString(),
@@ -166,10 +122,7 @@ export async function getRecommendedUsers(
       bio: currentUser.bio,
       interests: currentUser.interests,
     };
-
     const currentUserEmbedding = await generateUserEmbedding(currentUserProfile);
-    console.log('[Matching] Current user embedding generated, length:', currentUserEmbedding.length);
-
     // Calculate similarity scores for all candidates
     const scoredCandidates = await Promise.all(
       filteredCandidates.map(async (candidate) => {
@@ -180,30 +133,23 @@ export async function getRecommendedUsers(
           bio: candidate.bio,
           interests: candidate.interests,
         };
-
         const candidateEmbedding = await generateUserEmbedding(candidateProfile);
         const similarity = cosineSimilarity(currentUserEmbedding, candidateEmbedding);
-
         // Apply collaborative filtering bonus
         const collaborativeScore = await getCollaborativeFilteringScore(
           currentUserId,
           (candidate._id as mongoose.Types.ObjectId).toString()
         );
-
         // Combined score: 70% AI similarity + 30% collaborative filtering
         const finalScore = similarity * 0.7 + collaborativeScore * 0.3;
-
         return {
           user: candidate,
           score: finalScore,
         };
       })
     );
-
     // Sort by score and return top matches
     scoredCandidates.sort((a, b) => b.score - a.score);
-    console.log('[Matching] Top 5 scores:', scoredCandidates.slice(0, 5).map(c => ({ name: c.user.name, score: c.score.toFixed(3) })));
-
     const results = scoredCandidates.slice(0, limit).map((item) => {
       let distance;
       if (currentUser.location?.coordinates && item.user.location?.coordinates) {
@@ -211,7 +157,6 @@ export async function getRecommendedUsers(
         const [candLon, candLat] = item.user.location.coordinates;
         distance = calculateDistance(currentLat, currentLon, candLat, candLon);
       }
-
       return {
         id: (item.user._id as mongoose.Types.ObjectId).toString(),
         name: item.user.name,
@@ -222,15 +167,11 @@ export async function getRecommendedUsers(
         distance,
       };
     });
-    
-    console.log('[Matching] Returning', results.length, 'matches');
     return results;
   } catch (error) {
-    console.error('[Matching] Error getting recommended users:', error);
     throw error;
   }
 }
-
 /**
  * Collaborative filtering: Find similar users based on like patterns
  */
@@ -242,25 +183,19 @@ async function getCollaborativeFilteringScore(
     // Find users who liked the same profiles as current user
     const currentUserLikes = await Like.find({ fromUserId: userId }).select('toUserId');
     const currentUserLikedIds = currentUserLikes.map((like) => like.toUserId.toString());
-
     if (currentUserLikedIds.length === 0) return 0.5; // Neutral score if no likes yet
-
     // Find users who also liked those profiles (similar taste)
     const similarUsers = await Like.find({
       toUserId: { $in: currentUserLikedIds },
       fromUserId: { $ne: userId },
     }).select('fromUserId');
-
     const similarUserIds = [...new Set(similarUsers.map((like) => like.fromUserId.toString()))];
-
     if (similarUserIds.length === 0) return 0.5;
-
     // Check if similar users liked the candidate
     const candidateLikes = await Like.countDocuments({
       fromUserId: { $in: similarUserIds },
       toUserId: candidateId,
     });
-
     // Normalize score between 0 and 1
     const score = candidateLikes / similarUserIds.length;
     return score;
@@ -269,13 +204,11 @@ async function getCollaborativeFilteringScore(
     return 0.5; // Return neutral score on error
   }
 }
-
 /**
  * Batch generate embeddings for multiple users (for initialization)
  */
 export async function batchGenerateEmbeddings(userIds: string[]) {
   const users = await User.find({ _id: { $in: userIds } });
-  
   const embeddings = await Promise.all(
     users.map(async (user) => {
       const profile: UserProfile = {
@@ -285,13 +218,11 @@ export async function batchGenerateEmbeddings(userIds: string[]) {
         bio: user.bio,
         interests: user.interests,
       };
-      
       return {
         userId: (user._id as mongoose.Types.ObjectId).toString(),
         embedding: await generateUserEmbedding(profile),
       };
     })
   );
-
   return embeddings;
 }

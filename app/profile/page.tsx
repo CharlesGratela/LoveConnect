@@ -1,5 +1,4 @@
 'use client';
-
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
@@ -12,13 +11,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { LogOut, Upload, X } from 'lucide-react';
-
 const INTEREST_OPTIONS = [
   'Travel', 'Music', 'Movies', 'Sports', 'Reading', 'Cooking',
   'Fitness', 'Art', 'Gaming', 'Photography', 'Dancing', 'Hiking',
   'Technology', 'Fashion', 'Food', 'Pets', 'Yoga', 'Coffee'
 ];
-
 export default function ProfilePage() {
   const { user, isAuthenticated, loading: authLoading, logout, updateProfile } = useAuth();
   const router = useRouter();
@@ -34,20 +31,14 @@ export default function ProfilePage() {
   const [photoUrl, setPhotoUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
-
   useEffect(() => {
     // Wait for auth to load
     if (authLoading) return;
-    
     if (!isAuthenticated) {
       router.push('/auth');
       return;
     }
-
     if (user) {
-      console.log('[Profile] User data received:', user);
-      console.log('[Profile] Gender:', user.gender, 'Gender Preference:', user.genderPreference);
-      
       setFormData({
         name: user.name,
         age: user.age.toString(),
@@ -59,7 +50,6 @@ export default function ProfilePage() {
       });
     }
   }, [user, isAuthenticated, authLoading, router]);
-
   const handlePhotoUrlChange = () => {
     if (photoUrl.trim()) {
       setFormData({ ...formData, profilePhoto: photoUrl });
@@ -67,25 +57,20 @@ export default function ProfilePage() {
       toast.success('Photo URL updated!');
     }
   };
-
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     // Validate file type
     if (!file.type.startsWith('image/')) {
       toast.error('Please upload an image file');
       return;
     }
-
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
       toast.error('Image size must be less than 5MB');
       return;
     }
-
     setUploading(true);
-
     // Convert to base64
     const reader = new FileReader();
     reader.onloadend = () => {
@@ -100,7 +85,6 @@ export default function ProfilePage() {
     };
     reader.readAsDataURL(file);
   };
-
   const toggleInterest = (interest: string) => {
     setFormData(prev => ({
       ...prev,
@@ -109,11 +93,9 @@ export default function ProfilePage() {
         : [...prev.interests, interest]
     }));
   };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-
     try {
       await updateProfile({
         name: formData.name,
@@ -124,7 +106,6 @@ export default function ProfilePage() {
         profilePhoto: formData.profilePhoto,
         interests: formData.interests,
       });
-
       toast.success('Profile updated successfully!');
     } catch (error) {
       toast.error('Failed to update profile');
@@ -132,12 +113,10 @@ export default function ProfilePage() {
       setLoading(false);
     }
   };
-
   const handleLogout = async () => {
     await logout();
     router.push('/');
   };
-
   // Show loading while auth is being checked
   if (authLoading) {
     return (
@@ -152,7 +131,6 @@ export default function ProfilePage() {
       </>
     );
   }
-
   if (!user) {
     return (
       <>
@@ -163,7 +141,6 @@ export default function ProfilePage() {
       </>
     );
   }
-
   return (
     <>
       <Header />
@@ -172,7 +149,6 @@ export default function ProfilePage() {
           <h1 className="text-4xl font-bold mb-2">Your Profile</h1>
           <p className="text-muted-foreground">Manage your account settings</p>
         </div>
-
         <Card className="shadow-elevated animate-slide-up">
           <CardHeader>
             <CardTitle>Profile Information</CardTitle>
@@ -220,7 +196,6 @@ export default function ProfilePage() {
                       </div>
                     </div>
                   </div>
-                  
                   <div className="relative">
                     <div className="absolute inset-0 flex items-center">
                       <span className="w-full border-t" />
@@ -229,7 +204,6 @@ export default function ProfilePage() {
                       <span className="bg-background px-2 text-muted-foreground">Or</span>
                     </div>
                   </div>
-
                   <div>
                     <p className="text-sm font-medium mb-2">Option 2: Enter image URL</p>
                     <div className="flex gap-2">
@@ -252,7 +226,6 @@ export default function ProfilePage() {
                   </div>
                 </div>
               </div>
-
               <div className="space-y-2">
                 <Label htmlFor="name">Name</Label>
                 <Input
@@ -263,7 +236,6 @@ export default function ProfilePage() {
                   required
                 />
               </div>
-
               <div className="space-y-2">
                 <Label htmlFor="age">Age</Label>
                 <Input
@@ -277,7 +249,6 @@ export default function ProfilePage() {
                   max="100"
                 />
               </div>
-
               <div className="space-y-2">
                 <Label htmlFor="gender">Gender</Label>
                 <select
@@ -293,7 +264,6 @@ export default function ProfilePage() {
                   <option value="other">Other</option>
                 </select>
               </div>
-
               <div className="space-y-2">
                 <Label htmlFor="genderPreference">Interested in</Label>
                 <select
@@ -308,7 +278,6 @@ export default function ProfilePage() {
                   <option value="both">Everyone</option>
                 </select>
               </div>
-
               <div className="space-y-2">
                 <Label htmlFor="bio">Bio</Label>
                 <Textarea
@@ -321,7 +290,6 @@ export default function ProfilePage() {
                   rows={4}
                 />
               </div>
-
               <div className="space-y-2">
                 <Label>Interests</Label>
                 <div className="flex flex-wrap gap-2 p-3 border rounded-lg max-h-48 overflow-y-auto">
@@ -343,7 +311,6 @@ export default function ProfilePage() {
                   Selected: {formData.interests.length} interest{formData.interests.length !== 1 ? 's' : ''}
                 </p>
               </div>
-
               <div className="flex gap-2">
                 <Button type="submit" className="flex-1 gradient-primary" disabled={loading}>
                   {loading ? 'Saving...' : 'Save Changes'}
@@ -361,7 +328,6 @@ export default function ProfilePage() {
             </form>
           </CardContent>
         </Card>
-
         <Card className="mt-6 border-destructive/50">
           <CardHeader>
             <CardTitle className="text-destructive">Account Settings</CardTitle>
