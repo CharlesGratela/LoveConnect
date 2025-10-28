@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import Header from '@/components/layout/Header';
+import NotificationStatus from '@/components/NotificationStatus';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -149,6 +150,12 @@ export default function ProfilePage() {
           <h1 className="text-4xl font-bold mb-2">Your Profile</h1>
           <p className="text-muted-foreground">Manage your account settings</p>
         </div>
+        
+        {/* Notification Status */}
+        <div className="mb-6 animate-slide-up">
+          <NotificationStatus />
+        </div>
+        
         <Card className="shadow-elevated animate-slide-up">
           <CardHeader>
             <CardTitle>Profile Information</CardTitle>
