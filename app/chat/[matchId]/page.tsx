@@ -26,7 +26,7 @@ interface MatchUser {
 export default function ChatPage() {
   const params = useParams();
   const router = useRouter();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, loading: authLoading } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [matchUser, setMatchUser] = useState<MatchUser | null>(null);
@@ -36,6 +36,9 @@ export default function ChatPage() {
   const matchId = params?.matchId as string;
 
   useEffect(() => {
+    // Wait for auth to load
+    if (authLoading) return;
+    
     if (!isAuthenticated) {
       router.push('/auth');
       return;
@@ -44,7 +47,7 @@ export default function ChatPage() {
       fetchMatch();
       fetchMessages();
     }
-  }, [matchId, isAuthenticated, router]);
+  }, [matchId, isAuthenticated, authLoading, router]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -102,6 +105,21 @@ export default function ChatPage() {
       console.error('Send message error:', error);
     }
   };
+
+  // Show loading while auth is being checked
+  if (authLoading) {
+    return (
+      <>
+        <Header />
+        <div className="container flex items-center justify-center min-h-[calc(100vh-4rem)]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+            <p className="mt-4 text-muted-foreground">Checking authentication...</p>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   if (loading) {
     return (

@@ -20,7 +20,7 @@ const INTEREST_OPTIONS = [
 ];
 
 export default function ProfilePage() {
-  const { user, isAuthenticated, logout, updateProfile } = useAuth();
+  const { user, isAuthenticated, loading: authLoading, logout, updateProfile } = useAuth();
   const router = useRouter();
   const [formData, setFormData] = useState({
     name: '',
@@ -36,12 +36,18 @@ export default function ProfilePage() {
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
+    // Wait for auth to load
+    if (authLoading) return;
+    
     if (!isAuthenticated) {
       router.push('/auth');
       return;
     }
 
     if (user) {
+      console.log('[Profile] User data received:', user);
+      console.log('[Profile] Gender:', user.gender, 'Gender Preference:', user.genderPreference);
+      
       setFormData({
         name: user.name,
         age: user.age.toString(),
@@ -52,7 +58,7 @@ export default function ProfilePage() {
         interests: user.interests || [],
       });
     }
-  }, [user, isAuthenticated, router]);
+  }, [user, isAuthenticated, authLoading, router]);
 
   const handlePhotoUrlChange = () => {
     if (photoUrl.trim()) {
@@ -131,6 +137,21 @@ export default function ProfilePage() {
     await logout();
     router.push('/');
   };
+
+  // Show loading while auth is being checked
+  if (authLoading) {
+    return (
+      <>
+        <Header />
+        <div className="container flex items-center justify-center min-h-[calc(100vh-4rem)]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+            <p className="mt-4 text-muted-foreground">Checking authentication...</p>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   if (!user) {
     return (

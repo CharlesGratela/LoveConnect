@@ -23,16 +23,19 @@ interface Match {
 export default function MatchesPage() {
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, loading: authLoading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
+    // Wait for auth to load
+    if (authLoading) return;
+    
     if (!isAuthenticated) {
       router.push('/auth');
       return;
     }
     fetchMatches();
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, authLoading, router]);
 
   const fetchMatches = async () => {
     try {
@@ -66,6 +69,21 @@ export default function MatchesPage() {
   const handleChat = (matchId: string) => {
     router.push(`/chat/${matchId}`);
   };
+
+  // Show loading while auth is being checked
+  if (authLoading) {
+    return (
+      <>
+        <Header />
+        <div className="container flex items-center justify-center min-h-[calc(100vh-4rem)]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+            <p className="mt-4 text-muted-foreground">Checking authentication...</p>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   if (loading) {
     return (

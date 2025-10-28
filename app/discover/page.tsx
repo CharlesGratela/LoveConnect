@@ -34,18 +34,36 @@ export default function DiscoverPage() {
   const [ageRange, setAgeRange] = useState([18, 100]);
   const [maxDistance, setMaxDistance] = useState(100); // km
 
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, loading: authLoading } = useAuth();
   const router = useRouter();
 
+  console.log('[Discover] Auth state:', { isAuthenticated, authLoading });
+  console.log('[Discover] Component state:', { 
+    usersCount: users.length, 
+    currentIndex, 
+    loading,
+    hasCurrentUser: currentIndex < users.length,
+    currentUser: users[currentIndex]?.name
+  });
+
   useEffect(() => {
+    // Wait for auth to load before redirecting
+    if (authLoading) {
+      console.log('[Discover] Waiting for auth to load...');
+      return;
+    }
+    
     if (!isAuthenticated) {
+      console.log('[Discover] Not authenticated, redirecting to /auth');
       router.push('/auth');
       return;
     }
+    
+    console.log('[Discover] Authenticated, fetching users');
     fetchUsers();
     // Request notification permission
     requestNotificationPermission();
-  }, [isAuthenticated, router, ageRange, maxDistance]);
+  }, [isAuthenticated, authLoading, router, ageRange, maxDistance]);
 
   const fetchUsers = async () => {
     try {
@@ -171,7 +189,24 @@ export default function DiscoverPage() {
     return () => window.removeEventListener('mouseup', handleGlobalMouseUp);
   }, [isDragging, dragOffset]);
 
+  // Show loading while auth is being checked
+  if (authLoading) {
+    console.log('[Discover] Rendering auth loading state');
+    return (
+      <>
+        <Header />
+        <div className="container flex items-center justify-center min-h-[calc(100vh-4rem)]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+            <p className="mt-4 text-muted-foreground">Checking authentication...</p>
+          </div>
+        </div>
+      </>
+    );
+  }
+
   if (loading) {
+    console.log('[Discover] Rendering loading state');
     return (
       <>
         <Header />
@@ -186,6 +221,7 @@ export default function DiscoverPage() {
   }
 
   if (currentIndex >= users.length || users.length === 0) {
+    console.log('[Discover] Rendering empty state - currentIndex:', currentIndex, 'users.length:', users.length);
     return (
       <>
         <Header />
@@ -205,6 +241,7 @@ export default function DiscoverPage() {
   }
 
   const currentUser = users[currentIndex];
+  console.log('[Discover] Rendering user card:', currentUser?.name);
   const rotation = dragOffset.x * 0.1;
   const opacity = 1 - Math.abs(dragOffset.x) / 500;
 
@@ -266,14 +303,14 @@ export default function DiscoverPage() {
           </Card>
         )}
 
-        <div className="flex items-center justify-center">
+        <div className="flex items-center justify-center py-8">
           <div
-            className="relative w-full max-w-md aspect-[3/4]"
+            className="relative w-full max-w-sm h-[450px]"
             onMouseMove={handleMouseMove}
           >
             {/* Next card preview */}
             {users[currentIndex + 1] && (
-              <div className="absolute inset-0 scale-95 opacity-50">
+              <div className="absolute inset-0 scale-95 opacity-50 z-0">
                 <SwipeCard
                   user={users[currentIndex + 1]}
                   onSwipe={() => {}}
@@ -283,6 +320,7 @@ export default function DiscoverPage() {
 
             {/* Current card */}
             <div
+              className="absolute inset-0 z-10"
               onMouseDown={handleMouseDown}
               style={{
                 transform: `translate(${dragOffset.x}px, ${dragOffset.y}px) rotate(${rotation}deg)`,
