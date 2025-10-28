@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
 
     // Generate token
     const token = generateToken({
-      userId: user._id.toString(),
+      userId: String(user._id),
       email: user.email,
     });
 
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
 
     // Return user without password
     const userResponse = {
-      id: user._id.toString(),
+      id: String(user._id),
       email: user.email,
       name: user.name,
       age: user.age,

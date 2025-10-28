@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -155,7 +156,9 @@ export default function AuthPage() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8 animate-fade-in">
           <div className="flex justify-center mb-4">
-            <img src="/logo.svg" alt="nXtDate" className="h-20" />
+            <Link href="/" className="cursor-pointer transition-smooth hover:scale-105">
+              <img src="/logo.svg" alt="nXtDate" className="h-20" />
+            </Link>
           </div>
           <p className="text-muted-foreground mt-2">Find your perfect match</p>
         </div>

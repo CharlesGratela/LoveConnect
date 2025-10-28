@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
     }
 
     const userResponse = {
-      id: user._id.toString(),
+      id: String(user._id),
       email: user.email,
       name: user.name,
       age: user.age,
