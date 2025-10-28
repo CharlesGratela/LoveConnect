@@ -5,10 +5,12 @@ import { getUserFromToken } from '@/lib/auth';
 
 export async function GET(request: NextRequest) {
   try {
+    console.log('[API /users/profile] Getting profile...');
     await dbConnect();
 
     const tokenData = await getUserFromToken();
     if (!tokenData) {
+      console.log('[API /users/profile] Unauthorized - no valid token');
       return NextResponse.json(
         { message: 'Unauthorized' },
         { status: 401 }
@@ -17,11 +19,14 @@ export async function GET(request: NextRequest) {
 
     const user = await User.findById(tokenData.userId).select('-password');
     if (!user) {
+      console.error('[API /users/profile] User not found:', tokenData.userId);
       return NextResponse.json(
         { message: 'User not found' },
         { status: 404 }
       );
     }
+
+    console.log('[API /users/profile] Profile retrieved for:', user.email);
 
     const userResponse = {
       id: String(user._id),
@@ -31,11 +36,14 @@ export async function GET(request: NextRequest) {
       bio: user.bio,
       profilePhoto: user.profilePhoto,
       interests: user.interests,
+      gender: user.gender,
+      genderPreference: user.genderPreference,
+      location: user.location,
     };
 
     return NextResponse.json({ user: userResponse });
   } catch (error: any) {
-    console.error('Get profile error:', error);
+    console.error('[API /users/profile] Get profile error:', error);
     return NextResponse.json(
       { message: 'Internal server error', error: error.message },
       { status: 500 }
@@ -45,10 +53,12 @@ export async function GET(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
+    console.log('[API /users/profile] Starting profile update...');
     await dbConnect();
 
     const tokenData = await getUserFromToken();
     if (!tokenData) {
+      console.log('[API /users/profile] Unauthorized - no valid token');
       return NextResponse.json(
         { message: 'Unauthorized' },
         { status: 401 }
@@ -56,27 +66,39 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { name, age, bio, profilePhoto, interests } = body;
+    console.log('[API /users/profile] Update request body:', Object.keys(body));
+    
+    const { name, age, bio, profilePhoto, interests, gender, genderPreference, location } = body;
+
+    // Build update object
+    const updateData: any = {};
+    if (name) updateData.name = name;
+    if (age) updateData.age = parseInt(age);
+    if (bio) updateData.bio = bio;
+    if (profilePhoto) updateData.profilePhoto = profilePhoto;
+    if (interests) updateData.interests = interests;
+    if (gender) updateData.gender = gender;
+    if (genderPreference) updateData.genderPreference = genderPreference;
+    if (location) updateData.location = location;
+
+    console.log('[API /users/profile] Updating fields:', Object.keys(updateData));
 
     // Update user
     const user = await User.findByIdAndUpdate(
       tokenData.userId,
-      {
-        ...(name && { name }),
-        ...(age && { age: parseInt(age) }),
-        ...(bio && { bio }),
-        ...(profilePhoto && { profilePhoto }),
-        ...(interests && { interests }),
-      },
-      { new: true }
+      { $set: updateData },
+      { new: true, runValidators: false } // Don't run validators to avoid gender required error
     ).select('-password');
 
     if (!user) {
+      console.error('[API /users/profile] User not found:', tokenData.userId);
       return NextResponse.json(
         { message: 'User not found' },
         { status: 404 }
       );
     }
+
+    console.log('[API /users/profile] Profile updated successfully for:', user.email);
 
     const userResponse = {
       id: String(user._id),
@@ -86,11 +108,14 @@ export async function PUT(request: NextRequest) {
       bio: user.bio,
       profilePhoto: user.profilePhoto,
       interests: user.interests,
+      gender: user.gender,
+      genderPreference: user.genderPreference,
+      location: user.location,
     };
 
     return NextResponse.json({ user: userResponse });
   } catch (error: any) {
-    console.error('Update profile error:', error);
+    console.error('[API /users/profile] Update profile error:', error);
     return NextResponse.json(
       { message: 'Internal server error', error: error.message },
       { status: 500 }

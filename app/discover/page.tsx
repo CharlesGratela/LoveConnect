@@ -49,19 +49,38 @@ export default function DiscoverPage() {
 
   const fetchUsers = async () => {
     try {
+      console.log('[Discover] Fetching users with filters:', { ageRange, maxDistance });
       const params = new URLSearchParams({
         minAge: ageRange[0].toString(),
         maxAge: ageRange[1].toString(),
         maxDistance: maxDistance.toString(),
       });
-      const response = await fetch(`/api/discover?${params}`);
+      const response = await fetch(`/api/discover?${params}`, {
+        credentials: 'include',
+      });
+      
+      console.log('[Discover] Response status:', response.status);
+      
       if (response.ok) {
         const data = await response.json();
+        console.log('[Discover] Received', data.users?.length || 0, 'users');
+        
+        if (data.users && data.users.length > 0) {
+          console.log('[Discover] First user:', data.users[0]);
+        } else {
+          console.warn('[Discover] No users found. Try adjusting filters.');
+          toast.info('No matches found. Try adjusting your filters.');
+        }
+        
         setUsers(data.users || []);
         setCurrentIndex(0);
+      } else {
+        const errorData = await response.json();
+        console.error('[Discover] Error response:', errorData);
+        toast.error('Failed to load users: ' + (errorData.message || 'Unknown error'));
       }
     } catch (error) {
-      console.error('Error fetching users:', error);
+      console.error('[Discover] Error fetching users:', error);
       toast.error('Failed to load users');
     } finally {
       setLoading(false);
