@@ -41,7 +41,7 @@ export default function NotificationStatus() {
           <BellOff className="h-5 w-5 text-destructive" />
           <div>
             <p className="font-semibold text-destructive">Notifications Not Supported</p>
-            <p className="text-sm text-muted-foreground">Your browser doesn't support notifications</p>
+            <p className="text-sm text-muted-foreground">Your browser doesn&apos;t support notifications</p>
           </div>
         </div>
       </Card>
@@ -90,7 +90,7 @@ export default function NotificationStatus() {
         <div className="flex-1">
           <p className="font-semibold text-green-600">Notifications Enabled ✓</p>
           <p className="text-sm text-muted-foreground">
-            You'll receive notifications for matches, likes, and messages
+            You&apos;ll receive notifications for matches, likes, and messages
           </p>
         </div>
         <Button onClick={handleTestNotification} variant="outline" size="sm">
