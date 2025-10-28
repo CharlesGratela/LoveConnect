@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Message from '@/models/Message';
 import Match from '@/models/Match';
+import User from '@/models/User';
 import { getUserFromToken } from '@/lib/auth';
+import { sendMessageNotification } from '@/lib/push-server';
 import mongoose from 'mongoose';
 export async function GET(request: NextRequest) {
   try {
@@ -94,6 +96,19 @@ export async function POST(request: NextRequest) {
       receiverId: new mongoose.Types.ObjectId(receiverId),
       text: text.trim(),
     });
+
+    // Send push notification to receiver
+    const sender = await User.findById(currentUserId).select('name profilePhoto');
+    if (sender) {
+      sendMessageNotification(
+        receiverId,
+        sender.name,
+        sender.profilePhoto || '/favicon.svg',
+        text.trim(),
+        matchId
+      ).catch(err => console.error('[Messages] Error sending message notification:', err));
+    }
+
     return NextResponse.json({
       message: {
         id: String(message._id),

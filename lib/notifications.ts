@@ -128,3 +128,127 @@ export function showLikeNotification(likerName: string, likerPhoto: string): voi
 export function areNotificationsEnabled(): boolean {
   return ('Notification' in window) && Notification.permission === 'granted';
 }
+
+/**
+ * Subscribe to push notifications
+ */
+export async function subscribeToPushNotifications(userId: string): Promise<PushSubscription | null> {
+  console.log('[Notifications] Subscribing to push notifications for user:', userId);
+  
+  try {
+    // Check if service worker is supported
+    if (!('serviceWorker' in navigator)) {
+      console.warn('[Notifications] Service workers are not supported');
+      return null;
+    }
+
+    // Wait for service worker to be ready
+    const registration = await navigator.serviceWorker.ready;
+    console.log('[Notifications] Service worker ready:', registration);
+
+    // Check if Push API is supported
+    if (!('PushManager' in window)) {
+      console.warn('[Notifications] Push notifications are not supported');
+      return null;
+    }
+
+    // Get existing subscription or create new one
+    let subscription = await registration.pushManager.getSubscription();
+    
+    if (subscription) {
+      console.log('[Notifications] Existing push subscription found:', subscription);
+    } else {
+      // VAPID public key - will be generated later
+      const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+      
+      if (!vapidPublicKey) {
+        console.error('[Notifications] VAPID public key not configured');
+        return null;
+      }
+
+      console.log('[Notifications] Creating new push subscription...');
+      subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
+      });
+      console.log('[Notifications] New push subscription created:', subscription);
+    }
+
+    // Send subscription to server
+    const response = await fetch('/api/push/subscribe', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        userId,
+        subscription,
+      }),
+    });
+
+    if (!response.ok) {
+      console.error('[Notifications] Failed to save subscription to server');
+      return null;
+    }
+
+    console.log('[Notifications] ✅ Push subscription saved to server');
+    return subscription;
+  } catch (error) {
+    console.error('[Notifications] Error subscribing to push notifications:', error);
+    return null;
+  }
+}
+
+/**
+ * Unsubscribe from push notifications
+ */
+export async function unsubscribeFromPushNotifications(userId: string): Promise<boolean> {
+  console.log('[Notifications] Unsubscribing from push notifications for user:', userId);
+  
+  try {
+    if (!('serviceWorker' in navigator)) {
+      return false;
+    }
+
+    const registration = await navigator.serviceWorker.ready;
+    const subscription = await registration.pushManager.getSubscription();
+
+    if (subscription) {
+      await subscription.unsubscribe();
+      console.log('[Notifications] Unsubscribed from push notifications');
+
+      // Remove subscription from server
+      await fetch('/api/push/unsubscribe', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId }),
+      });
+    }
+
+    return true;
+  } catch (error) {
+    console.error('[Notifications] Error unsubscribing from push notifications:', error);
+    return false;
+  }
+}
+
+/**
+ * Convert VAPID key from base64 to Uint8Array
+ */
+function urlBase64ToUint8Array(base64String: string): Uint8Array {
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding)
+    .replace(/-/g, '+')
+    .replace(/_/g, '/');
+
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+
+  return outputArray;
+}

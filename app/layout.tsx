@@ -7,6 +7,7 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { QueryProvider } from '@/components/providers/query-provider';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ThemeProvider } from '@/components/providers/theme-provider';
+import { ServiceWorkerRegistration } from '@/components/ServiceWorkerRegistration';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -35,6 +36,7 @@ export default function RootLayout({
           <QueryProvider>
             <TooltipProvider>
               <AuthProvider>
+                <ServiceWorkerRegistration />
                 {children}
                 <Toaster />
                 <Sonner />

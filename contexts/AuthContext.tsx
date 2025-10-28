@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { subscribeToPushNotifications, requestNotificationPermission } from '@/lib/notifications';
 
 interface User {
   id: string;
@@ -125,6 +126,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // Store user in localStorage
     if (typeof window !== 'undefined') {
       localStorage.setItem('auth-user', JSON.stringify(data.user));
+    }
+
+    // Request notification permission and subscribe to push notifications
+    try {
+      const permission = await requestNotificationPermission();
+      if (permission === 'granted' && data.user?.id) {
+        await subscribeToPushNotifications(data.user.id);
+      }
+    } catch (error) {
+      console.error('[Auth] Error setting up push notifications:', error);
     }
   };
 

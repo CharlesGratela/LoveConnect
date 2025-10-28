@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Like from '@/models/Like';
 import Match from '@/models/Match';
+import User from '@/models/User';
 import { getUserFromToken } from '@/lib/auth';
+import { sendLikeNotification, sendMatchNotification } from '@/lib/push-server';
 import mongoose from 'mongoose';
 
 export async function POST(request: NextRequest) {
@@ -40,6 +42,9 @@ export async function POST(request: NextRequest) {
       toUserId: new mongoose.Types.ObjectId(targetUserId),
     });
 
+    // Get current user details for notification
+    const currentUser = await User.findById(currentUserId).select('name profilePhoto');
+
     // Check if target user also liked current user
     const reciprocalLike = await Like.findOne({
       fromUserId: targetUserId,
@@ -62,6 +67,31 @@ export async function POST(request: NextRequest) {
       match = await Match.findById(String(match._id))
         .populate('user1Id', 'name age profilePhoto bio interests')
         .populate('user2Id', 'name age profilePhoto bio interests');
+
+      // Send match notifications to both users
+      const targetUser = await User.findById(targetUserId).select('name profilePhoto');
+      if (currentUser && targetUser) {
+        // Notify current user about the match
+        sendMatchNotification(
+          currentUserId,
+          targetUser.name,
+          targetUser.profilePhoto || '/favicon.svg'
+        ).catch(err => console.error('[Swipe] Error sending match notification to current user:', err));
+
+        // Notify target user about the match
+        sendMatchNotification(
+          targetUserId,
+          currentUser.name,
+          currentUser.profilePhoto || '/favicon.svg'
+        ).catch(err => console.error('[Swipe] Error sending match notification to target user:', err));
+      }
+    } else if (currentUser) {
+      // No match yet, but send like notification to target user
+      sendLikeNotification(
+        targetUserId,
+        currentUser.name,
+        currentUser.profilePhoto || '/favicon.svg'
+      ).catch(err => console.error('[Swipe] Error sending like notification:', err));
     }
 
     return NextResponse.json({
