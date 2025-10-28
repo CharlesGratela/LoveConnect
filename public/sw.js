@@ -15,7 +15,11 @@ self.addEventListener('activate', (event) => {
 
 // Push event - receive push notifications from server
 self.addEventListener('push', (event) => {
-  console.log('[Service Worker] Push received:', event);
+  console.log('[Service Worker] ========================================');
+  console.log('[Service Worker] PUSH EVENT RECEIVED!');
+  console.log('[Service Worker] Event:', event);
+  console.log('[Service Worker] Event data:', event.data);
+  console.log('[Service Worker] ========================================');
   
   let data = {
     title: 'nXtDate',
@@ -30,7 +34,7 @@ self.addEventListener('push', (event) => {
   if (event.data) {
     try {
       const payload = event.data.json();
-      console.log('[Service Worker] Push payload:', payload);
+      console.log('[Service Worker] ✅ Parsed push payload:', payload);
       data = {
         title: payload.title || data.title,
         body: payload.body || data.body,
@@ -42,9 +46,13 @@ self.addEventListener('push', (event) => {
         vibrate: payload.vibrate || [200, 100, 200]
       };
     } catch (error) {
-      console.error('[Service Worker] Error parsing push data:', error);
+      console.error('[Service Worker] ❌ Error parsing push data:', error);
     }
+  } else {
+    console.warn('[Service Worker] ⚠️ No data in push event!');
   }
+
+  console.log('[Service Worker] 🔔 Showing notification with data:', data);
 
   // Show the notification
   const promiseChain = self.registration.showNotification(data.title, {
@@ -56,7 +64,13 @@ self.addEventListener('push', (event) => {
     requireInteraction: data.requireInteraction,
     vibrate: data.vibrate,
     actions: data.actions || []
+  }).then(() => {
+    console.log('[Service Worker] ✅ Notification shown successfully!');
+  }).catch((error) => {
+    console.error('[Service Worker] ❌ Error showing notification:', error);
   });
+
+  event.waitUntil(promiseChain);
 
   event.waitUntil(promiseChain);
 });
