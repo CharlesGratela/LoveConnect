@@ -1,24 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
-import { verifyToken } from '@/lib/auth';
+import { getUserFromToken } from '@/lib/auth';
 import { PushSubscription } from '@/models/PushSubscription';
 
 export async function POST(request: NextRequest) {
   try {
-    // Verify authentication
-    const token = request.headers.get('Authorization')?.replace('Bearer ', '');
-    const decoded = await verifyToken(token || '');
+    // Verify authentication using cookies
+    const tokenData = await getUserFromToken();
     
-    if (!decoded) {
+    if (!tokenData) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
     }
 
     await dbConnect();
 
-    console.log('[Push API] Removing subscriptions for user:', decoded.userId);
+    console.log('[Push API] Removing subscriptions for user:', tokenData.userId);
 
     // Remove all subscriptions for this user
-    await PushSubscription.deleteMany({ userId: decoded.userId });
+    await PushSubscription.deleteMany({ userId: tokenData.userId });
 
     console.log('[Push API] ✅ Subscriptions removed successfully');
 

@@ -1,15 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
-import { verifyToken } from '@/lib/auth';
+import { getUserFromToken } from '@/lib/auth';
 import { PushSubscription } from '@/models/PushSubscription';
 
 export async function POST(request: NextRequest) {
   try {
-    // Verify authentication
-    const token = request.headers.get('Authorization')?.replace('Bearer ', '');
-    const decoded = await verifyToken(token || '');
+    // Verify authentication using cookies
+    const tokenData = await getUserFromToken();
     
-    if (!decoded) {
+    if (!tokenData) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
     }
 
@@ -25,16 +24,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('[Push API] Saving subscription for user:', decoded.userId);
+    console.log('[Push API] Saving subscription for user:', tokenData.userId);
 
     // Upsert subscription (update if exists, create if not)
     await PushSubscription.findOneAndUpdate(
       {
-        userId: decoded.userId,
+        userId: tokenData.userId,
         endpoint: subscription.endpoint,
       },
       {
-        userId: decoded.userId,
+        userId: tokenData.userId,
         endpoint: subscription.endpoint,
         keys: {
           p256dh: subscription.keys.p256dh,

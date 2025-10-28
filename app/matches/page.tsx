@@ -8,7 +8,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { MessageCircle, Heart, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { showLikeNotification, requestNotificationPermission } from '@/lib/notifications';
+import { requestNotificationPermission } from '@/lib/notifications';
 
 interface Match {
   id: string;
@@ -24,7 +24,6 @@ interface Match {
 export default function MatchesPage() {
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
-  const [lastLikeCheck, setLastLikeCheck] = useState<string>(new Date().toISOString());
   const { isAuthenticated, loading: authLoading } = useAuth();
   const router = useRouter();
 
@@ -37,38 +36,9 @@ export default function MatchesPage() {
       return;
     }
     fetchMatches();
+    // Request notification permission (push notifications are handled by Service Worker)
     requestNotificationPermission();
-    
-    // Poll for new likes every 5 seconds
-    const likesInterval = setInterval(() => {
-      checkForNewLikes();
-    }, 5000);
-    
-    return () => clearInterval(likesInterval);
   }, [isAuthenticated, authLoading, router]);
-
-  const checkForNewLikes = async () => {
-    try {
-      const response = await fetch(`/api/likes/new?since=${lastLikeCheck}`, {
-        credentials: 'include',
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        
-        if (data.likes && data.likes.length > 0) {
-          data.likes.forEach((like: any) => {
-            showLikeNotification(like.user.name, like.user.profilePhoto);
-            toast.info(`${like.user.name} liked your profile! 💖`);
-          });
-          
-          setLastLikeCheck(new Date().toISOString());
-        }
-      }
-    } catch (error) {
-      console.error('[Matches] Error checking for new likes:', error);
-    }
-  };
 
   const fetchMatches = async () => {
     try {

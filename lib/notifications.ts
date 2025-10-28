@@ -180,8 +180,8 @@ export async function subscribeToPushNotifications(userId: string): Promise<Push
       headers: {
         'Content-Type': 'application/json',
       },
+      credentials: 'include', // Important: include cookies for authentication
       body: JSON.stringify({
-        userId,
         subscription,
       }),
     });
@@ -223,7 +223,7 @@ export async function unsubscribeFromPushNotifications(userId: string): Promise<
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ userId }),
+        credentials: 'include', // Important: include cookies for authentication
       });
     }
 

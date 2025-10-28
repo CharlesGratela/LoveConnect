@@ -10,7 +10,7 @@ import { Slider } from '@/components/ui/slider';
 import { Card } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { Sparkles, SlidersHorizontal, X } from 'lucide-react';
-import { requestNotificationPermission, showMatchNotification, showLikeNotification } from '@/lib/notifications';
+import { requestNotificationPermission, showMatchNotification } from '@/lib/notifications';
 interface User {
   id: string;
   name: string;
@@ -30,7 +30,6 @@ export default function DiscoverPage() {
   const [showFilters, setShowFilters] = useState(false);
   const [ageRange, setAgeRange] = useState([18, 100]);
   const [maxDistance, setMaxDistance] = useState(20000); // km - worldwide by default
-  const [lastLikeCheck, setLastLikeCheck] = useState<string>(new Date().toISOString());
   const { isAuthenticated, loading: authLoading } = useAuth();
   const router = useRouter();
 
@@ -44,46 +43,9 @@ export default function DiscoverPage() {
       return;
     }
     fetchUsers();
-    // Request notification permission
+    // Request notification permission (push notifications are handled by Service Worker)
     requestNotificationPermission();
-    
-    // Poll for new likes every 5 seconds
-    const likesInterval = setInterval(() => {
-      checkForNewLikes();
-    }, 5000);
-    
-    return () => clearInterval(likesInterval);
   }, [isAuthenticated, authLoading, router, ageRange, maxDistance]);
-  
-  const checkForNewLikes = async () => {
-    try {
-      const response = await fetch(`/api/likes/new?since=${lastLikeCheck}`, {
-        credentials: 'include',
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        
-        if (data.likes && data.likes.length > 0) {
-          console.log('[Discover] Received', data.likes.length, 'new likes');
-          
-          // Show notification for each new like
-          data.likes.forEach((like: any) => {
-            console.log('[Discover] Someone liked you:', like.user.name);
-            showLikeNotification(like.user.name, like.user.profilePhoto);
-            
-            // Also show a toast
-            toast.info(`${like.user.name} liked your profile! 💖`);
-          });
-          
-          // Update last check time
-          setLastLikeCheck(new Date().toISOString());
-        }
-      }
-    } catch (error) {
-      console.error('[Discover] Error checking for new likes:', error);
-    }
-  };
   
   const fetchUsers = async () => {
     try {

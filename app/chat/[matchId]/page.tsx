@@ -7,7 +7,7 @@ import Header from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ArrowLeft, Send } from 'lucide-react';
-import { showMessageNotification, requestNotificationPermission } from '@/lib/notifications';
+import { requestNotificationPermission } from '@/lib/notifications';
 
 interface Message {
   id: string;
@@ -48,10 +48,10 @@ export default function ChatPage() {
       fetchMatch();
       fetchMessages();
       
-      // Request notification permission
+      // Request notification permission (push notifications are handled by Service Worker)
       requestNotificationPermission();
       
-      // Poll for new messages every 3 seconds
+      // Poll for new messages every 3 seconds to update UI
       const interval = setInterval(() => {
         fetchMessages();
       }, 3000);
@@ -86,20 +86,7 @@ export default function ChatPage() {
         const data = await response.json();
         const newMessages = data.messages || [];
         
-        // Check for new messages from the other user
-        if (messages.length > 0 && newMessages.length > messages.length && user && matchUser) {
-          const latestMessage = newMessages[newMessages.length - 1];
-          
-          // Only notify if the message is from the other person (not from current user)
-          if (latestMessage.senderId !== user.id) {
-            showMessageNotification(
-              matchUser.name,
-              latestMessage.text,
-              matchUser.profilePhoto
-            );
-          }
-        }
-        
+        // Update UI with new messages (push notifications handled by Service Worker)
         setMessages(newMessages);
       }
     } catch (error) {
