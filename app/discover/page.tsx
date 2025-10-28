@@ -32,12 +32,7 @@ export default function DiscoverPage() {
   const [maxDistance, setMaxDistance] = useState(100); // km
   const { isAuthenticated, loading: authLoading } = useAuth();
   const router = useRouter();
-    usersCount: users.length, 
-    currentIndex, 
-    loading,
-    hasCurrentUser: currentIndex < users.length,
-    currentUser: users[currentIndex]?.name
-  });
+
   useEffect(() => {
     // Wait for auth to load before redirecting
     if (authLoading) {

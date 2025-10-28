@@ -47,13 +47,7 @@ export async function getRecommendedUsers(
     if (!currentUser) {
       throw new Error('User not found');
     }
-      name: currentUser.name,
-      age: currentUser.age,
-      gender: currentUser.gender,
-      genderPreference: currentUser.genderPreference,
-      location: currentUser.location?.coordinates ? 'Yes' : 'No',
-      interests: currentUser.interests.length,
-    });
+
     // Get users already liked or matched
     const likedUsers = await Like.find({ fromUserId: currentUserId }).select('toUserId');
     const likedUserIds = likedUsers.map((like) => like.toUserId.toString());
