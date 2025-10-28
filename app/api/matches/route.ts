@@ -30,18 +30,18 @@ export async function GET(request: NextRequest) {
 
     // Format matches
     const formattedMatches = matches.map((match) => {
-      const isUser1 = match.user1Id._id.toString() === currentUserId;
+      const isUser1 = String((match.user1Id as any)._id) === currentUserId;
       const matchedUser = isUser1 ? match.user2Id : match.user1Id;
 
       return {
-        id: match._id.toString(),
+        id: String(match._id),
         user: {
-          id: matchedUser._id.toString(),
-          name: matchedUser.name,
-          age: matchedUser.age,
-          profilePhoto: matchedUser.profilePhoto,
-          bio: matchedUser.bio,
-          interests: matchedUser.interests,
+          id: String((matchedUser as any)._id),
+          name: (matchedUser as any).name,
+          age: (matchedUser as any).age,
+          profilePhoto: (matchedUser as any).profilePhoto,
+          bio: (matchedUser as any).bio,
+          interests: (matchedUser as any).interests,
         },
         matchedAt: match.matchedAt,
       };

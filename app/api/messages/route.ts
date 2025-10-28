@@ -54,9 +54,9 @@ export async function GET(request: NextRequest) {
       .limit(100);
 
     const formattedMessages = messages.map((msg) => ({
-      id: msg._id.toString(),
-      senderId: msg.senderId.toString(),
-      receiverId: msg.receiverId.toString(),
+      id: String(msg._id),
+      senderId: String(msg.senderId),
+      receiverId: String(msg.receiverId),
       text: msg.text,
       read: msg.read,
       timestamp: msg.createdAt,
@@ -115,9 +115,9 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       message: {
-        id: message._id.toString(),
-        senderId: message.senderId.toString(),
-        receiverId: message.receiverId.toString(),
+        id: String(message._id),
+        senderId: String(message.senderId),
+        receiverId: String(message.receiverId),
         text: message.text,
         read: message.read,
         timestamp: message.createdAt,

@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
       });
 
       // Populate match with user details
-      match = await Match.findById(match.String(_id))
+      match = await Match.findById(String(match._id))
         .populate('user1Id', 'name age profilePhoto bio interests')
         .populate('user2Id', 'name age profilePhoto bio interests');
     }
@@ -68,8 +68,8 @@ export async function POST(request: NextRequest) {
       success: true,
       matched: !!match,
       match: match ? {
-        id: match.String(_id),
-        matchedWith: match.user1Id.String(_id) === currentUserId ? match.user2Id : match.user1Id,
+        id: String(match._id),
+        matchedWith: String((match.user1Id as any)._id) === currentUserId ? match.user2Id : match.user1Id,
         matchedAt: match.matchedAt,
       } : null,
     });
