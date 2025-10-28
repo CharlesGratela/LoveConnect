@@ -1,0 +1,124 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import Link from 'next/link';
+
+export default function VerifyEmailPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const token = searchParams.get('token');
+  const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
+  const [message, setMessage] = useState('');
+
+  useEffect(() => {
+    if (!token) {
+      setStatus('error');
+      setMessage('Verification token is missing');
+      return;
+    }
+
+    verifyEmail();
+  }, [token]);
+
+  const verifyEmail = async () => {
+    try {
+      const response = await fetch(`/api/auth/verify-email?token=${token}`);
+      const data = await response.json();
+
+      if (response.ok) {
+        setStatus('success');
+        setMessage(data.message);
+        // Redirect to login after 3 seconds
+        setTimeout(() => {
+          router.push('/auth');
+        }, 3000);
+      } else {
+        setStatus('error');
+        setMessage(data.message);
+      }
+    } catch (error) {
+      setStatus('error');
+      setMessage('An error occurred during verification');
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center p-4 gradient-bg">
+      <Card className="w-full max-w-md shadow-elevated">
+        <CardHeader className="text-center">
+          <div className="flex justify-center mb-4">
+            <Link href="/">
+              <img src="/logo.svg" alt="nXtDate" className="h-16" />
+            </Link>
+          </div>
+          <CardTitle>Email Verification</CardTitle>
+          <CardDescription>
+            {status === 'loading' && 'Verifying your email...'}
+            {status === 'success' && 'Email verified successfully!'}
+            {status === 'error' && 'Verification failed'}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="text-center space-y-4">
+          {status === 'loading' && (
+            <div className="flex flex-col items-center gap-4">
+              <Loader2 className="h-16 w-16 text-primary animate-spin" />
+              <p className="text-muted-foreground">Please wait while we verify your email...</p>
+            </div>
+          )}
+
+          {status === 'success' && (
+            <div className="flex flex-col items-center gap-4">
+              <div className="h-16 w-16 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center">
+                <CheckCircle className="h-10 w-10 text-green-600 dark:text-green-400" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-green-600 dark:text-green-400 mb-2">
+                  Success! 🎉
+                </h3>
+                <p className="text-muted-foreground mb-4">{message}</p>
+                <p className="text-sm text-muted-foreground">
+                  Redirecting to login page in 3 seconds...
+                </p>
+              </div>
+              <Button onClick={() => router.push('/auth')} className="gradient-primary">
+                Go to Login
+              </Button>
+            </div>
+          )}
+
+          {status === 'error' && (
+            <div className="flex flex-col items-center gap-4">
+              <div className="h-16 w-16 rounded-full bg-red-100 dark:bg-red-900 flex items-center justify-center">
+                <XCircle className="h-10 w-10 text-red-600 dark:text-red-400" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-red-600 dark:text-red-400 mb-2">
+                  Verification Failed
+                </h3>
+                <p className="text-muted-foreground mb-4">{message}</p>
+                <p className="text-sm text-muted-foreground mb-4">
+                  The verification link may have expired or is invalid.
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <Button onClick={() => router.push('/auth')} variant="outline">
+                  Back to Login
+                </Button>
+                <Button 
+                  onClick={() => router.push('/auth?resend=true')} 
+                  className="gradient-primary"
+                >
+                  Resend Verification Email
+                </Button>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

@@ -96,8 +96,41 @@ export default function AuthPage() {
 
     try {
       if (isLogin) {
-        await login(formData.email, formData.password);
-        toast.success('Welcome back!');
+        try {
+          await login(formData.email, formData.password);
+          toast.success('Welcome back!');
+          router.push('/discover');
+        } catch (error: any) {
+          // Check if error is due to unverified email
+          if (error.message?.includes('verify your email') || error.status === 403) {
+            toast.error('Please verify your email before logging in', {
+              description: 'Check your inbox for the verification link',
+              action: {
+                label: 'Resend Email',
+                onClick: async () => {
+                  try {
+                    const response = await fetch('/api/auth/resend-verification', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ email: formData.email }),
+                    });
+                    if (response.ok) {
+                      toast.success('Verification email sent!');
+                    } else {
+                      toast.error('Failed to resend email');
+                    }
+                  } catch (err) {
+                    toast.error('Failed to resend email');
+                  }
+                },
+              },
+            });
+          } else {
+            toast.error('Invalid credentials');
+          }
+          setLoading(false);
+          return;
+        }
       } else {
         if (!formData.name || !formData.age || !formData.bio) {
           toast.error('Please fill in all fields');
@@ -141,10 +174,12 @@ export default function AuthPage() {
           interests: formData.interests,
           location,
         });
-        toast.success('Account created successfully!');
+        toast.success('Account created successfully!', {
+          description: 'Please check your email to verify your account',
+        });
+        setIsLogin(true); // Switch to login form
       }
-      router.push('/discover');
-    } catch (error) {
+    } catch (error: any) {
       toast.error(isLogin ? 'Invalid credentials' : 'Registration failed');
     } finally {
       setLoading(false);

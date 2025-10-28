@@ -37,6 +37,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Check if email is verified
+    if (!user.isEmailVerified) {
+      return NextResponse.json(
+        { 
+          message: 'Please verify your email before logging in',
+          emailVerified: false,
+          email: user.email
+        },
+        { status: 403 }
+      );
+    }
+
     // Generate token
     const token = generateToken({
       userId: String(user._id),

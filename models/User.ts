@@ -14,6 +14,9 @@ export interface IUser extends Document {
     type: string;
     coordinates: number[]; // [longitude, latitude]
   };
+  isEmailVerified: boolean;
+  verificationToken?: string;
+  verificationTokenExpiry?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -76,6 +79,16 @@ const UserSchema: Schema = new Schema(
         type: [Number],
         default: [0, 0],
       },
+    },
+    isEmailVerified: {
+      type: Boolean,
+      default: false,
+    },
+    verificationToken: {
+      type: String,
+    },
+    verificationTokenExpiry: {
+      type: Date,
     },
   },
   {

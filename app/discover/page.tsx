@@ -97,7 +97,7 @@ export default function DiscoverPage() {
           toast.success(
             <div className="flex items-center gap-2">
               <Sparkles className="h-5 w-5 text-primary" />
-              <span>It's a match with {currentUser.name}!</span>
+              <span>It&apos;s a match with {currentUser.name}!</span>
             </div>,
             { duration: 3000 }
           );
