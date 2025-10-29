@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { useTheme } from 'next-themes';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
+import Image from 'next/image';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,8 +25,8 @@ const Header = () => {
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between">
         <Link href="/discover" className="flex items-center gap-2 transition-smooth hover:scale-105">
-          <img src="/favicon.svg" alt="nXtDate" className="h-8 md:hidden" />
-          <img src="/logo.svg" alt="nXtDate" className="h-12 hidden md:block" />
+          <Image src="/favicon.svg" alt="nXtDate" width={32} height={32} className="h-8 md:hidden" priority />
+          <Image src="/logo.svg" alt="nXtDate" width={48} height={48} className="h-12 hidden md:block" priority />
         </Link>
 
         <nav className="flex items-center gap-2 md:gap-4">

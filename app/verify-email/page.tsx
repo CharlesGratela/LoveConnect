@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 function VerifyEmailContent() {
   const router = useRouter();
@@ -46,7 +47,7 @@ function VerifyEmailContent() {
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
             <Link href="/">
-              <img src="/logo.svg" alt="nXtDate" className="h-16" />
+              <Image src="/logo.svg" alt="nXtDate" width={64} height={64} className="h-16" priority />
             </Link>
           </div>
           <CardTitle>Email Verification</CardTitle>

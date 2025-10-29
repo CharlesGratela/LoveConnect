@@ -151,14 +151,50 @@ export default function DiscoverPage() {
       setDragOffset({ x: 0, y: 0 });
     }
   };
+
+  // Touch event handlers for mobile
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    setDragStart({ x: touch.clientX, y: touch.clientY });
+    setIsDragging(true);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDragging) return;
+    const touch = e.touches[0];
+    const deltaX = touch.clientX - dragStart.x;
+    const deltaY = touch.clientY - dragStart.y;
+    setDragOffset({ x: deltaX, y: deltaY });
+  };
+
+  const handleTouchEnd = () => {
+    if (!isDragging) return;
+    setIsDragging(false);
+    const threshold = 100;
+    if (Math.abs(dragOffset.x) > threshold) {
+      handleSwipe(dragOffset.x > 0 ? 'right' : 'left');
+    } else {
+      setDragOffset({ x: 0, y: 0 });
+    }
+  };
+
   useEffect(() => {
     const handleGlobalMouseUp = () => {
       if (isDragging) {
         handleMouseUp();
       }
     };
+    const handleGlobalTouchEnd = () => {
+      if (isDragging) {
+        handleTouchEnd();
+      }
+    };
     window.addEventListener('mouseup', handleGlobalMouseUp);
-    return () => window.removeEventListener('mouseup', handleGlobalMouseUp);
+    window.addEventListener('touchend', handleGlobalTouchEnd);
+    return () => {
+      window.removeEventListener('mouseup', handleGlobalMouseUp);
+      window.removeEventListener('touchend', handleGlobalTouchEnd);
+    };
   }, [isDragging, dragOffset]);
   // Show loading while auth is being checked
   if (authLoading) {
@@ -341,6 +377,7 @@ export default function DiscoverPage() {
           <div
             className="relative w-full max-w-sm h-[550px]"
             onMouseMove={handleMouseMove}
+            onTouchMove={handleTouchMove}
           >
             {/* Next card preview */}
             {users[currentIndex + 1] && (
@@ -355,6 +392,7 @@ export default function DiscoverPage() {
             <div
               className="absolute inset-0 z-10"
               onMouseDown={handleMouseDown}
+              onTouchStart={handleTouchStart}
               style={{
                 transform: `translate(${dragOffset.x}px, ${dragOffset.y}px) rotate(${rotation}deg)`,
                 opacity,

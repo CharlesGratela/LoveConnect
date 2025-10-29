@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Heart } from 'lucide-react';
+import Image from 'next/image';
 
 export default function Home() {
   const { isAuthenticated } = useAuth();
@@ -20,7 +21,7 @@ export default function Home() {
     <div className="min-h-screen flex items-center justify-center p-4 gradient-bg">
       <div className="text-center animate-fade-in">
         <div className="flex justify-center mb-6">
-          <img src="/logo.svg" alt="nXtDate" className="h-32 animate-pulse-glow" />
+          <Image src="/logo.svg" alt="nXtDate" width={128} height={128} className="h-32 animate-pulse-glow" priority />
         </div>
         <p className="text-xl text-muted-foreground mb-8 max-w-md mx-auto">
           Discover meaningful connections powered by AI matching

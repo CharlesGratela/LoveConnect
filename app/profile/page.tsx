@@ -12,6 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { LogOut, Upload, X } from 'lucide-react';
+import Image from 'next/image';
 const INTEREST_OPTIONS = [
   'Travel', 'Music', 'Movies', 'Sports', 'Reading', 'Cooking',
   'Fitness', 'Art', 'Gaming', 'Photography', 'Dancing', 'Hiking',
@@ -169,9 +170,11 @@ export default function ProfilePage() {
                 <Label>Profile Photo</Label>
                 <div className="space-y-3">
                   <div className="flex items-center gap-4">
-                    <img
+                    <Image
                       src={formData.profilePhoto || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=400&q=80'}
                       alt={formData.name || 'Profile'}
+                      width={80}
+                      height={80}
                       className="h-20 w-20 rounded-full object-cover border-2 border-border"
                     />
                     <div className="flex-1">

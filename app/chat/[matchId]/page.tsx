@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ArrowLeft, Send } from 'lucide-react';
 import { requestNotificationPermission } from '@/lib/notifications';
+import Image from 'next/image';
 
 interface Message {
   id: string;
@@ -175,9 +176,11 @@ export default function ChatPage() {
           >
             <ArrowLeft />
           </Button>
-          <img
+          <Image
             src={matchUser.profilePhoto}
             alt={matchUser.name}
+            width={48}
+            height={48}
             className="h-12 w-12 rounded-full object-cover"
           />
           <div>

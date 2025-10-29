@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -192,7 +193,7 @@ export default function AuthPage() {
         <div className="text-center mb-8 animate-fade-in">
           <div className="flex justify-center mb-4">
             <Link href="/" className="cursor-pointer transition-smooth hover:scale-105">
-              <img src="/logo.svg" alt="nXtDate" className="h-20" />
+              <Image src="/logo.svg" alt="nXtDate" width={80} height={80} className="h-20" priority />
             </Link>
           </div>
           <p className="text-muted-foreground mt-2">Find your perfect match</p>
@@ -284,9 +285,11 @@ export default function AuthPage() {
                     <Label>Profile Photo</Label>
                     <div className="space-y-3">
                       <div className="flex items-center gap-4">
-                        <img
+                        <Image
                           src={formData.profilePhoto}
                           alt="Profile"
+                          width={80}
+                          height={80}
                           className="h-20 w-20 rounded-full object-cover border-2 border-border"
                         />
                         <div className="flex-1">

@@ -18,6 +18,10 @@ const nextConfig: NextConfig = {
         hostname: '**.cloudinary.com',
       },
     ],
+    dangerouslyAllowSVG: true,
+    contentDispositionType: 'attachment',
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+    unoptimized: false,
   },
   experimental: {
     serverActions: {

@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { MapPin, Heart, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import Image from 'next/image';
 interface User {
   id: string;
   name: string;
@@ -35,13 +36,14 @@ const SwipeCard = ({ user, onSwipe, style, isDragging }: SwipeCardProps) => {
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
             </div>
           )}
-          <img
+          <Image
             src={user.profilePhoto}
             alt={user.name}
-            className={`h-full w-full object-cover object-center transition-opacity duration-300 ${
+            fill
+            sizes="(max-width: 768px) 100vw, 550px"
+            className={`object-cover object-center transition-opacity duration-300 ${
               imageLoaded ? 'opacity-100' : 'opacity-0'
             }`}
-            style={{ maxHeight: '100%' }}
             onLoad={() => {
               setImageLoaded(true);
             }}

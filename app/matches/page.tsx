@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { MessageCircle, Heart, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { requestNotificationPermission } from '@/lib/notifications';
+import Image from 'next/image';
 
 interface Match {
   id: string;
@@ -142,9 +143,11 @@ export default function MatchesPage() {
               style={{ animationDelay: `${index * 0.1}s` }}
             >
               <div className="relative aspect-square">
-                <img
+                <Image
                   src={match.user.profilePhoto}
                   alt={match.user.name}
+                  width={400}
+                  height={400}
                   className="w-full h-full object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
