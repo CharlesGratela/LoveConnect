@@ -35,6 +35,7 @@ function DiscoverContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const matchedWithUserId = searchParams.get('matchedWith');
+  const likedByUserId = searchParams.get('likedBy');
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -47,7 +48,8 @@ function DiscoverContent() {
       console.log('[Discover] Fetching users with filters:', { 
         ageRange, 
         maxDistance: maxDistance >= 20000 ? 'Worldwide' : `${maxDistance}km`,
-        matchedWithUserId 
+        matchedWithUserId,
+        likedByUserId
       });
       
       const response = await fetch(`/api/discover?${params}`, {
@@ -62,28 +64,38 @@ function DiscoverContent() {
         
         let fetchedUsers = data.users || [];
         
-        // If we have a matchedWith parameter, prioritize that user
-        if (matchedWithUserId && fetchedUsers.length > 0) {
-          const matchedUserIndex = fetchedUsers.findIndex((u: User) => u.id === matchedWithUserId);
+        // Prioritize user based on notification type
+        const priorityUserId = matchedWithUserId || likedByUserId;
+        const notificationType = matchedWithUserId ? 'match' : 'like';
+        
+        if (priorityUserId && fetchedUsers.length > 0) {
+          const priorityUserIndex = fetchedUsers.findIndex((u: User) => u.id === priorityUserId);
           
-          if (matchedUserIndex > -1) {
-            // Move the matched user to the front
-            const matchedUser = fetchedUsers[matchedUserIndex];
+          if (priorityUserIndex > -1) {
+            // Move the priority user to the front
+            const priorityUser = fetchedUsers[priorityUserIndex];
             fetchedUsers = [
-              matchedUser,
-              ...fetchedUsers.slice(0, matchedUserIndex),
-              ...fetchedUsers.slice(matchedUserIndex + 1)
+              priorityUser,
+              ...fetchedUsers.slice(0, priorityUserIndex),
+              ...fetchedUsers.slice(priorityUserIndex + 1)
             ];
             
-            console.log('[Discover] Prioritized matched user:', matchedUser.name);
-            toast.success(`Showing your match first! 💕`, {
-              description: `${matchedUser.name} is ready to connect!`
-            });
+            console.log('[Discover] Prioritized user:', priorityUser.name, 'Type:', notificationType);
+            
+            if (notificationType === 'match') {
+              toast.success(`Showing your match first! 💕`, {
+                description: `${priorityUser.name} is ready to connect!`
+              });
+            } else {
+              toast.success(`Someone likes you! 💖`, {
+                description: `${priorityUser.name} liked your profile!`
+              });
+            }
             
             // Clear the query parameter after processing
             router.replace('/discover', { scroll: false });
           } else {
-            console.log('[Discover] Matched user not found in current results');
+            console.log('[Discover] Priority user not found in current results');
           }
         }
         
@@ -105,7 +117,7 @@ function DiscoverContent() {
     } finally {
       setLoading(false);
     }
-  }, [ageRange, maxDistance, matchedWithUserId, router]);
+  }, [ageRange, maxDistance, matchedWithUserId, likedByUserId, router]);
 
   useEffect(() => {
     // Wait for auth to load before redirecting

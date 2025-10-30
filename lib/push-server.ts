@@ -111,7 +111,7 @@ export async function sendMatchNotification(
       type: 'match',
       matchName,
       matchedUserId, // Include the matched user ID for routing
-      url: matchedUserId ? `/discover?matchedWith=${matchedUserId}` : '/discover',
+      url: '/matches', // Route to matches page for match notifications
     },
     requireInteraction: true,
   });
@@ -123,7 +123,8 @@ export async function sendMatchNotification(
 export async function sendLikeNotification(
   userId: string,
   likerName: string,
-  likerPhoto?: string // Optional, not used (kept for backwards compatibility)
+  likerPhoto?: string, // Optional, not used (kept for backwards compatibility)
+  likerId?: string // ID of the user who liked
 ): Promise<void> {
   await sendPushNotificationToUser(userId, {
     title: 'Someone likes you! 💖',
@@ -132,6 +133,8 @@ export async function sendLikeNotification(
     data: {
       type: 'like',
       likerName,
+      likerId, // Include the liker's ID for routing
+      url: likerId ? `/discover?likedBy=${likerId}` : '/discover',
     },
     requireInteraction: false,
   });

@@ -92,7 +92,8 @@ export async function POST(request: NextRequest) {
       sendLikeNotification(
         targetUserId,
         currentUser.name,
-        currentUser.profilePhoto || '/favicon.svg'
+        currentUser.profilePhoto || '/favicon.svg',
+        currentUserId // Pass the liker's user ID
       ).catch(err => console.error('[Swipe] Error sending like notification:', err));
     }
 

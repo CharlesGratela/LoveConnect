@@ -95,10 +95,11 @@ self.addEventListener('notificationclick', (event) => {
 
   if (notificationData) {
     if (notificationData.type === 'match') {
-      // Use the custom URL with matchedUserId if available
-      urlToOpen = notificationData.url || '/discover';
+      // Match notification routes to /matches page
+      urlToOpen = notificationData.url || '/matches';
     } else if (notificationData.type === 'like') {
-      urlToOpen = '/matches';
+      // Like notification routes to /discover with likedBy parameter
+      urlToOpen = notificationData.url || '/discover';
     } else if (notificationData.type === 'message') {
       urlToOpen = notificationData.matchId ? `/chat/${notificationData.matchId}` : '/matches';
     }
