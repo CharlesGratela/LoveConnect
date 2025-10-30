@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import Header from '@/components/layout/Header';
@@ -37,6 +37,38 @@ export default function ChatPage() {
 
   const matchId = params?.matchId as string;
 
+  const fetchMatch = useCallback(async () => {
+    try {
+      const response = await fetch('/api/matches');
+      if (response.ok) {
+        const data = await response.json();
+        const match = data.matches.find((m: any) => m.id === matchId);
+        if (match) {
+          setMatchUser(match.user);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching match:', error);
+    }
+  }, [matchId]);
+
+  const fetchMessages = useCallback(async () => {
+    try {
+      const response = await fetch(`/api/messages?matchId=${matchId}`);
+      if (response.ok) {
+        const data = await response.json();
+        const newMessages = data.messages || [];
+        
+        // Update UI with new messages (push notifications handled by Service Worker)
+        setMessages(newMessages);
+      }
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [matchId]);
+
   useEffect(() => {
     // Wait for auth to load
     if (authLoading) return;
@@ -59,43 +91,11 @@ export default function ChatPage() {
       
       return () => clearInterval(interval);
     }
-  }, [matchId, isAuthenticated, authLoading, router]);
+  }, [matchId, isAuthenticated, authLoading, router, fetchMatch, fetchMessages]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
-
-  const fetchMatch = async () => {
-    try {
-      const response = await fetch('/api/matches');
-      if (response.ok) {
-        const data = await response.json();
-        const match = data.matches.find((m: any) => m.id === matchId);
-        if (match) {
-          setMatchUser(match.user);
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching match:', error);
-    }
-  };
-
-  const fetchMessages = async () => {
-    try {
-      const response = await fetch(`/api/messages?matchId=${matchId}`);
-      if (response.ok) {
-        const data = await response.json();
-        const newMessages = data.messages || [];
-        
-        // Update UI with new messages (push notifications handled by Service Worker)
-        setMessages(newMessages);
-      }
-    } catch (error) {
-      console.error('Error fetching messages:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleSend = async () => {
     if (!newMessage.trim() || !user || !matchUser) return;

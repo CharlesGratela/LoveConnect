@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import SwipeCard from '@/components/discover/SwipeCard';
@@ -20,7 +20,8 @@ interface User {
   interests: string[];
   distance?: number;
 }
-export default function DiscoverPage() {
+
+function DiscoverContent() {
   const [users, setUsers] = useState<User[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
@@ -35,21 +36,7 @@ export default function DiscoverPage() {
   const searchParams = useSearchParams();
   const matchedWithUserId = searchParams.get('matchedWith');
 
-  useEffect(() => {
-    // Wait for auth to load before redirecting
-    if (authLoading) {
-      return;
-    }
-    if (!isAuthenticated) {
-      router.push('/auth');
-      return;
-    }
-    fetchUsers();
-    // Request notification permission (push notifications are handled by Service Worker)
-    requestNotificationPermission();
-  }, [isAuthenticated, authLoading, router, ageRange, maxDistance]);
-  
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       const params = new URLSearchParams({
         minAge: ageRange[0].toString(),
@@ -118,12 +105,27 @@ export default function DiscoverPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [ageRange, maxDistance, matchedWithUserId, router]);
+
+  useEffect(() => {
+    // Wait for auth to load before redirecting
+    if (authLoading) {
+      return;
+    }
+    if (!isAuthenticated) {
+      router.push('/auth');
+      return;
+    }
+    fetchUsers();
+    // Request notification permission (push notifications are handled by Service Worker)
+    requestNotificationPermission();
+  }, [isAuthenticated, authLoading, router, fetchUsers]);
   const resetFilters = () => {
     setAgeRange([18, 100]);
     setMaxDistance(20000); // Reset to worldwide
   };
-  const handleSwipe = async (direction: 'left' | 'right') => {
+
+  const handleSwipe = useCallback(async (direction: 'left' | 'right') => {
     if (currentIndex >= users.length) return;
     const currentUser = users[currentIndex];
     const action = direction === 'right' ? 'like' : 'dislike';
@@ -160,7 +162,7 @@ export default function DiscoverPage() {
     }
     setCurrentIndex((prev) => prev + 1);
     setDragOffset({ x: 0, y: 0 });
-  };
+  }, [currentIndex, users]);
   const handleMouseDown = (e: React.MouseEvent) => {
     setDragStart({ x: e.clientX, y: e.clientY });
     setIsDragging(true);
@@ -171,7 +173,8 @@ export default function DiscoverPage() {
     const deltaY = e.clientY - dragStart.y;
     setDragOffset({ x: deltaX, y: deltaY });
   };
-  const handleMouseUp = () => {
+
+  const handleMouseUp = useCallback(() => {
     if (!isDragging) return;
     setIsDragging(false);
     const threshold = 100;
@@ -180,7 +183,7 @@ export default function DiscoverPage() {
     } else {
       setDragOffset({ x: 0, y: 0 });
     }
-  };
+  }, [isDragging, dragOffset, handleSwipe]);
 
   // Touch event handlers for mobile
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -197,7 +200,7 @@ export default function DiscoverPage() {
     setDragOffset({ x: deltaX, y: deltaY });
   };
 
-  const handleTouchEnd = () => {
+  const handleTouchEnd = useCallback(() => {
     if (!isDragging) return;
     setIsDragging(false);
     const threshold = 100;
@@ -206,7 +209,7 @@ export default function DiscoverPage() {
     } else {
       setDragOffset({ x: 0, y: 0 });
     }
-  };
+  }, [isDragging, dragOffset, handleSwipe]);
 
   useEffect(() => {
     const handleGlobalMouseUp = () => {
@@ -225,7 +228,7 @@ export default function DiscoverPage() {
       window.removeEventListener('mouseup', handleGlobalMouseUp);
       window.removeEventListener('touchend', handleGlobalTouchEnd);
     };
-  }, [isDragging, dragOffset]);
+  }, [isDragging, handleMouseUp, handleTouchEnd]);
 
   // Listen for navigation messages from Service Worker
   useEffect(() => {
@@ -471,5 +474,23 @@ export default function DiscoverPage() {
         </div>
       </div>
     </>
+  );
+}
+
+export default function DiscoverPage() {
+  return (
+    <Suspense fallback={
+      <>
+        <Header />
+        <div className="container flex items-center justify-center min-h-[calc(100vh-4rem)]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+            <p className="mt-4 text-muted-foreground">Loading...</p>
+          </div>
+        </div>
+      </>
+    }>
+      <DiscoverContent />
+    </Suspense>
   );
 }
