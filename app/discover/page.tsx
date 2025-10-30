@@ -91,9 +91,6 @@ function DiscoverContent() {
                 description: `${priorityUser.name} liked your profile!`
               });
             }
-            
-            // Clear the query parameter after processing
-            router.replace('/discover', { scroll: false });
           } else {
             console.log('[Discover] Priority user not found in current results');
           }
