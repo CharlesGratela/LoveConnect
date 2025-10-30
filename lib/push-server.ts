@@ -100,7 +100,8 @@ export async function sendPushNotificationToUser(
 export async function sendMatchNotification(
   userId: string,
   matchName: string,
-  matchPhoto?: string // Optional, not used (kept for backwards compatibility)
+  matchPhoto?: string, // Optional, not used (kept for backwards compatibility)
+  matchedUserId?: string // ID of the user they matched with
 ): Promise<void> {
   await sendPushNotificationToUser(userId, {
     title: 'It\'s a Match! 💕',
@@ -109,6 +110,8 @@ export async function sendMatchNotification(
     data: {
       type: 'match',
       matchName,
+      matchedUserId, // Include the matched user ID for routing
+      url: matchedUserId ? `/discover?matchedWith=${matchedUserId}` : '/discover',
     },
     requireInteraction: true,
   });

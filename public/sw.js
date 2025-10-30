@@ -95,13 +95,16 @@ self.addEventListener('notificationclick', (event) => {
 
   if (notificationData) {
     if (notificationData.type === 'match') {
-      urlToOpen = '/matches';
+      // Use the custom URL with matchedUserId if available
+      urlToOpen = notificationData.url || '/discover';
     } else if (notificationData.type === 'like') {
       urlToOpen = '/matches';
     } else if (notificationData.type === 'message') {
       urlToOpen = notificationData.matchId ? `/chat/${notificationData.matchId}` : '/matches';
     }
   }
+
+  console.log('[Service Worker] Opening URL:', urlToOpen);
 
   // Open or focus the app
   event.waitUntil(

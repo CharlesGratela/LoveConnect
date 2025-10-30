@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import SwipeCard from '@/components/discover/SwipeCard';
 import Header from '@/components/layout/Header';
@@ -32,6 +32,8 @@ export default function DiscoverPage() {
   const [maxDistance, setMaxDistance] = useState(20000); // km - worldwide by default
   const { isAuthenticated, loading: authLoading } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const matchedWithUserId = searchParams.get('matchedWith');
 
   useEffect(() => {
     // Wait for auth to load before redirecting
@@ -57,7 +59,8 @@ export default function DiscoverPage() {
       
       console.log('[Discover] Fetching users with filters:', { 
         ageRange, 
-        maxDistance: maxDistance >= 20000 ? 'Worldwide' : `${maxDistance}km` 
+        maxDistance: maxDistance >= 20000 ? 'Worldwide' : `${maxDistance}km`,
+        matchedWithUserId 
       });
       
       const response = await fetch(`/api/discover?${params}`, {
@@ -70,12 +73,39 @@ export default function DiscoverPage() {
         const data = await response.json();
         console.log('[Discover] Received', data.users?.length || 0, 'users');
         
-        if (data.users && data.users.length > 0) {
-          console.log('[Discover] First user:', data.users[0]?.name, 'Distance:', data.users[0]?.distance);
+        let fetchedUsers = data.users || [];
+        
+        // If we have a matchedWith parameter, prioritize that user
+        if (matchedWithUserId && fetchedUsers.length > 0) {
+          const matchedUserIndex = fetchedUsers.findIndex((u: User) => u.id === matchedWithUserId);
+          
+          if (matchedUserIndex > -1) {
+            // Move the matched user to the front
+            const matchedUser = fetchedUsers[matchedUserIndex];
+            fetchedUsers = [
+              matchedUser,
+              ...fetchedUsers.slice(0, matchedUserIndex),
+              ...fetchedUsers.slice(matchedUserIndex + 1)
+            ];
+            
+            console.log('[Discover] Prioritized matched user:', matchedUser.name);
+            toast.success(`Showing your match first! 💕`, {
+              description: `${matchedUser.name} is ready to connect!`
+            });
+            
+            // Clear the query parameter after processing
+            router.replace('/discover', { scroll: false });
+          } else {
+            console.log('[Discover] Matched user not found in current results');
+          }
+        }
+        
+        if (fetchedUsers.length > 0) {
+          console.log('[Discover] First user:', fetchedUsers[0]?.name, 'Distance:', fetchedUsers[0]?.distance);
         } else {
           toast.info('No matches found. Try adjusting your filters.');
         }
-        setUsers(data.users || []);
+        setUsers(fetchedUsers);
         setCurrentIndex(0);
       } else {
         const errorData = await response.json();
@@ -196,6 +226,24 @@ export default function DiscoverPage() {
       window.removeEventListener('touchend', handleGlobalTouchEnd);
     };
   }, [isDragging, dragOffset]);
+
+  // Listen for navigation messages from Service Worker
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data && event.data.type === 'navigate' && event.data.url) {
+        console.log('[Discover] Received navigation message from SW:', event.data.url);
+        router.push(event.data.url);
+      }
+    };
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.addEventListener('message', handleMessage);
+      return () => {
+        navigator.serviceWorker.removeEventListener('message', handleMessage);
+      };
+    }
+  }, [router]);
+
   // Show loading while auth is being checked
   if (authLoading) {
     return (

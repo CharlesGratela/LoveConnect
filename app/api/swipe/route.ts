@@ -75,14 +75,16 @@ export async function POST(request: NextRequest) {
         sendMatchNotification(
           currentUserId,
           targetUser.name,
-          targetUser.profilePhoto || '/favicon.svg'
+          targetUser.profilePhoto || '/favicon.svg',
+          targetUserId // Pass the matched user ID
         ).catch(err => console.error('[Swipe] Error sending match notification to current user:', err));
 
         // Notify target user about the match
         sendMatchNotification(
           targetUserId,
           currentUser.name,
-          currentUser.profilePhoto || '/favicon.svg'
+          currentUser.profilePhoto || '/favicon.svg',
+          currentUserId // Pass the matched user ID
         ).catch(err => console.error('[Swipe] Error sending match notification to target user:', err));
       }
     } else if (currentUser) {
