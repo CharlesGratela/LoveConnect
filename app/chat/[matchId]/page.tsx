@@ -181,7 +181,7 @@ export default function ChatPage() {
             alt={matchUser.name}
             width={48}
             height={48}
-            className="h-12 w-12 rounded-full object-cover"
+            className="rounded-full object-cover"
           />
           <div>
             <h2 className="font-semibold">

@@ -47,7 +47,9 @@ function VerifyEmailContent() {
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
             <Link href="/">
-              <Image src="/logo.svg" alt="nXtDate" width={64} height={64} className="h-16" priority />
+              <div className="relative h-16 w-16">
+                <Image src="/logo.svg" alt="nXtDate" fill className="object-contain" priority />
+              </div>
             </Link>
           </div>
           <CardTitle>Email Verification</CardTitle>

@@ -175,7 +175,7 @@ export default function ProfilePage() {
                       alt={formData.name || 'Profile'}
                       width={80}
                       height={80}
-                      className="h-20 w-20 rounded-full object-cover border-2 border-border"
+                      className="rounded-full object-cover border-2 border-border"
                     />
                     <div className="flex-1">
                       <p className="text-sm font-medium mb-3">Option 1: Upload from computer</p>

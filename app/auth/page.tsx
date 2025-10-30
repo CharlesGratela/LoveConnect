@@ -193,7 +193,9 @@ export default function AuthPage() {
         <div className="text-center mb-8 animate-fade-in">
           <div className="flex justify-center mb-4">
             <Link href="/" className="cursor-pointer transition-smooth hover:scale-105">
-              <Image src="/logo.svg" alt="nXtDate" width={80} height={80} className="h-20" priority />
+              <div className="relative h-20 w-20">
+                <Image src="/logo.svg" alt="nXtDate" fill className="object-contain" priority />
+              </div>
             </Link>
           </div>
           <p className="text-muted-foreground mt-2">Find your perfect match</p>
@@ -290,7 +292,7 @@ export default function AuthPage() {
                           alt="Profile"
                           width={80}
                           height={80}
-                          className="h-20 w-20 rounded-full object-cover border-2 border-border"
+                          className="rounded-full object-cover border-2 border-border"
                         />
                         <div className="flex-1">
                           <p className="text-sm font-medium mb-3">Option 1: Upload from computer</p>

@@ -25,8 +25,12 @@ const Header = () => {
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between">
         <Link href="/discover" className="flex items-center gap-2 transition-smooth hover:scale-105">
-          <Image src="/favicon.svg" alt="nXtDate" width={32} height={32} className="h-8 md:hidden" priority />
-          <Image src="/logo.svg" alt="nXtDate" width={48} height={48} className="h-12 hidden md:block" priority />
+          <div className="relative h-8 w-8 md:hidden">
+            <Image src="/favicon.svg" alt="nXtDate" fill className="object-contain" priority />
+          </div>
+          <div className="relative h-12 w-auto hidden md:block" style={{ width: '128px' }}>
+            <Image src="/logo.svg" alt="nXtDate" fill className="object-contain" priority />
+          </div>
         </Link>
 
         <nav className="flex items-center gap-2 md:gap-4">

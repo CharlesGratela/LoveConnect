@@ -146,9 +146,9 @@ export default function MatchesPage() {
                 <Image
                   src={match.user.profilePhoto}
                   alt={match.user.name}
-                  width={400}
-                  height={400}
-                  className="w-full h-full object-cover"
+                  fill
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  className="object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                 <div className="absolute bottom-4 left-4 text-white">

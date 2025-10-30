@@ -21,7 +21,9 @@ export default function Home() {
     <div className="min-h-screen flex items-center justify-center p-4 gradient-bg">
       <div className="text-center animate-fade-in">
         <div className="flex justify-center mb-6">
-          <Image src="/logo.svg" alt="nXtDate" width={128} height={128} className="h-32 animate-pulse-glow" priority />
+          <div className="relative h-32 w-32">
+            <Image src="/logo.svg" alt="nXtDate" fill className="object-contain animate-pulse-glow" priority />
+          </div>
         </div>
         <p className="text-xl text-muted-foreground mb-8 max-w-md mx-auto">
           Discover meaningful connections powered by AI matching
