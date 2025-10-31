@@ -193,7 +193,7 @@ export default function AuthPage() {
         <div className="text-center mb-8 animate-fade-in">
           <div className="flex justify-center mb-4">
             <Link href="/" className="cursor-pointer transition-smooth hover:scale-105">
-              <div className="relative h-20 w-20">
+              <div className="relative h-32 w-32 md:h-40 md:w-40">
                 <Image src="/logo.svg" alt="nXtDate" fill className="object-contain" priority />
               </div>
             </Link>

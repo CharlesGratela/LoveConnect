@@ -47,7 +47,7 @@ function VerifyEmailContent() {
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
             <Link href="/">
-              <div className="relative h-16 w-16">
+              <div className="relative h-24 w-24 md:h-32 md:w-32">
                 <Image src="/logo.svg" alt="nXtDate" fill className="object-contain" priority />
               </div>
             </Link>
