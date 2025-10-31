@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import Header from '@/components/layout/Header';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MessageCircle, Heart, Trash2 } from 'lucide-react';
+import { MessageCircle, Heart, HeartCrack } from 'lucide-react';
 import { toast } from 'sonner';
 import Image from 'next/image';
 
@@ -172,7 +172,7 @@ export default function MatchesPage() {
                     onClick={() => handleUnmatch(match.id, match.user.name)}
                     className="hover:text-destructive hover:border-destructive"
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <HeartCrack className="h-4 w-4" />
                   </Button>
                 </div>
               </CardContent>
