@@ -63,8 +63,6 @@ export default function ChatPage() {
       }
     } catch (error) {
       console.error('Error fetching messages:', error);
-    } finally {
-      setLoading(false);
     }
   }, [matchId]);
 
@@ -77,8 +75,12 @@ export default function ChatPage() {
       return;
     }
     if (matchId) {
-      fetchMatch();
-      fetchMessages();
+      // Load match and messages together
+      const loadInitialData = async () => {
+        await Promise.all([fetchMatch(), fetchMessages()]);
+        setLoading(false);
+      };
+      loadInitialData();
       
       // Poll for new messages every 3 seconds to update UI
       const interval = setInterval(() => {
