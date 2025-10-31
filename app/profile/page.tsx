@@ -32,6 +32,7 @@ export default function ProfilePage() {
   const [photoUrl, setPhotoUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [dataReady, setDataReady] = useState(false);
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
     newPassword: '',
@@ -46,6 +47,8 @@ export default function ProfilePage() {
       return;
     }
     if (user) {
+      console.log('[Profile] User data:', user);
+      console.log('[Profile] User gender:', user.gender);
       setFormData({
         name: user.name,
         age: user.age.toString(),
@@ -55,6 +58,10 @@ export default function ProfilePage() {
         profilePhoto: user.profilePhoto,
         interests: user.interests || [],
       });
+      // Mark data as ready after form is populated
+      setTimeout(() => {
+        setDataReady(true);
+      }, 500); // Small delay to ensure state is updated
     }
   }, [user, isAuthenticated, authLoading, router]);
   const handlePhotoUrlChange = () => {
@@ -201,6 +208,20 @@ export default function ProfilePage() {
       </>
     );
   }
+
+  // Wait for form data to be populated
+  if (!dataReady) {
+    return (
+      <>
+        <Header />
+        <div className="container flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] gap-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+          <p className="text-muted-foreground">Loading your profile...</p>
+        </div>
+      </>
+    );
+  }
+
   return (
     <>
       <Header />
