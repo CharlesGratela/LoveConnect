@@ -1,6 +1,6 @@
 'use client';
 
-import { Heart, User, MessageCircle, LogOut, Moon, Sun } from 'lucide-react';
+import { Heart, User, MessageCircle, LogOut, Moon, Sun, Search } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTheme } from 'next-themes';
@@ -39,7 +39,7 @@ const Header = () => {
               variant={isActive('/discover') ? 'default' : 'ghost'}
               className="transition-smooth"
             >
-              <Heart className={`h-5 w-5 ${isActive('/discover') ? 'fill-current' : ''}`} />
+              <Search className={`h-5 w-5 ${isActive('/discover') ? 'fill-current' : ''}`} />
               <span className="ml-2 hidden md:inline">Discover</span>
             </Button>
           </Link>

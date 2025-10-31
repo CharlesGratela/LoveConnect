@@ -310,30 +310,14 @@ function DiscoverContent() {
       <div className="container min-h-[calc(100vh-4rem)] p-4">
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-2xl font-bold">Discover</h1>
-          <div className="flex gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                console.log('[Test] Testing notification...');
-                const testNotif = new Notification('Test Notification 🔔', {
-                  body: 'If you see this, notifications are working!',
-                  icon: '/favicon.svg',
-                });
-                toast.success('Test notification sent! Check if you received it.');
-              }}
-            >
-              🔔 Test
-            </Button>
-            <Button
-              variant={showFilters ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setShowFilters(!showFilters)}
-            >
-              <SlidersHorizontal className="mr-2 h-4 w-4" />
-              Filters
-            </Button>
-          </div>
+          <Button
+            variant={showFilters ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setShowFilters(!showFilters)}
+          >
+            <SlidersHorizontal className="mr-2 h-4 w-4" />
+            Filters
+          </Button>
         </div>
         {showFilters && (
           <Card className="p-4 mb-4 animate-slide-up shadow-lg border-2">
