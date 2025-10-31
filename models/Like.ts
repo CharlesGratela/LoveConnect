@@ -3,6 +3,7 @@ import mongoose, { Schema, Document, Model } from 'mongoose';
 export interface ILike extends Document {
   fromUserId: mongoose.Types.ObjectId;
   toUserId: mongoose.Types.ObjectId;
+  action: 'like' | 'dislike';
   createdAt: Date;
 }
 
@@ -17,6 +18,12 @@ const LikeSchema: Schema = new Schema(
       type: Schema.Types.ObjectId,
       ref: 'User',
       required: true,
+    },
+    action: {
+      type: String,
+      enum: ['like', 'dislike'],
+      required: true,
+      default: 'like',
     },
   },
   {

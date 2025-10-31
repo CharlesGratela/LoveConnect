@@ -58,10 +58,10 @@ export async function getRecommendedUsers(
       genderPreference: currentUser.genderPreference,
     });
 
-    // Get users already liked or matched
-    const likedUsers = await Like.find({ fromUserId: currentUserId }).select('toUserId');
-    const likedUserIds = likedUsers.map((like) => like.toUserId.toString());
-    console.log('[Matching] Already liked:', likedUserIds.length);
+    // Get users already liked or disliked (any interaction)
+    const swipedUsers = await Like.find({ fromUserId: currentUserId }).select('toUserId');
+    const swipedUserIds = swipedUsers.map((swipe) => swipe.toUserId.toString());
+    console.log('[Matching] Already swiped (liked or disliked):', swipedUserIds.length);
     
     // Get all matched users
     const matches = await Match.find({
@@ -78,8 +78,8 @@ export async function getRecommendedUsers(
     });
     console.log('[Matching] Already matched:', matchedUserIds.length);
     
-    // Exclude already interacted users
-    const excludedIds = [...likedUserIds, ...matchedUserIds, currentUserId];
+    // Exclude already interacted users (both swiped and matched)
+    const excludedIds = [...swipedUserIds, ...matchedUserIds, currentUserId];
     console.log('[Matching] Total excluded:', excludedIds.length);
     
     // Build query with age filter
@@ -220,14 +220,18 @@ async function getCollaborativeFilteringScore(
   candidateId: string
 ): Promise<number> {
   try {
-    // Find users who liked the same profiles as current user
-    const currentUserLikes = await Like.find({ fromUserId: userId }).select('toUserId');
+    // Find users who liked the same profiles as current user (only actual likes)
+    const currentUserLikes = await Like.find({ 
+      fromUserId: userId,
+      action: 'like'
+    }).select('toUserId');
     const currentUserLikedIds = currentUserLikes.map((like) => like.toUserId.toString());
     if (currentUserLikedIds.length === 0) return 0.5; // Neutral score if no likes yet
     // Find users who also liked those profiles (similar taste)
     const similarUsers = await Like.find({
       toUserId: { $in: currentUserLikedIds },
       fromUserId: { $ne: userId },
+      action: 'like',
     }).select('fromUserId');
     const similarUserIds = [...new Set(similarUsers.map((like) => like.fromUserId.toString()))];
     if (similarUserIds.length === 0) return 0.5;
@@ -235,6 +239,7 @@ async function getCollaborativeFilteringScore(
     const candidateLikes = await Like.countDocuments({
       fromUserId: { $in: similarUserIds },
       toUserId: candidateId,
+      action: 'like',
     });
     // Normalize score between 0 and 1
     const score = candidateLikes / similarUserIds.length;

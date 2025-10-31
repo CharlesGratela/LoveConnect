@@ -23,9 +23,10 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const since = searchParams.get('since'); // Timestamp to check for likes after
 
-    // Build query for likes received by current user
+    // Build query for likes received by current user (only actual likes)
     const query: any = {
       toUserId: currentUserId,
+      action: 'like',
     };
 
     // If 'since' timestamp provided, only get likes after that time

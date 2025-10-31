@@ -31,24 +31,26 @@ export async function POST(request: NextRequest) {
 
     const currentUserId = tokenData.userId;
 
-    // Only process likes (skip dislikes)
+    // Store the swipe (like or dislike)
+    const swipe = await Like.create({
+      fromUserId: new mongoose.Types.ObjectId(currentUserId),
+      toUserId: new mongoose.Types.ObjectId(targetUserId),
+      action: action, // 'like' or 'dislike'
+    });
+
+    // Only process likes for matching (skip dislikes)
     if (action === 'dislike') {
       return NextResponse.json({ success: true, matched: false });
     }
 
-    // Create like
-    const like = await Like.create({
-      fromUserId: new mongoose.Types.ObjectId(currentUserId),
-      toUserId: new mongoose.Types.ObjectId(targetUserId),
-    });
-
     // Get current user details for notification
     const currentUser = await User.findById(currentUserId).select('name profilePhoto');
 
-    // Check if target user also liked current user
+    // Check if target user also liked current user (not disliked)
     const reciprocalLike = await Like.findOne({
       fromUserId: targetUserId,
       toUserId: currentUserId,
+      action: 'like',
     });
 
     let match = null;
