@@ -7,7 +7,6 @@ import Header from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ArrowLeft, Send } from 'lucide-react';
-import { requestNotificationPermission } from '@/lib/notifications';
 import Image from 'next/image';
 
 interface Message {
@@ -80,9 +79,6 @@ export default function ChatPage() {
     if (matchId) {
       fetchMatch();
       fetchMessages();
-      
-      // Request notification permission (push notifications are handled by Service Worker)
-      requestNotificationPermission();
       
       // Poll for new messages every 3 seconds to update UI
       const interval = setInterval(() => {

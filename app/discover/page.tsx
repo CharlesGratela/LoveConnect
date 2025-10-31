@@ -10,7 +10,6 @@ import { Slider } from '@/components/ui/slider';
 import { Card } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { Sparkles, SlidersHorizontal, X } from 'lucide-react';
-import { requestNotificationPermission, showMatchNotification } from '@/lib/notifications';
 interface User {
   id: string;
   name: string;
@@ -126,8 +125,6 @@ function DiscoverContent() {
       return;
     }
     fetchUsers();
-    // Request notification permission (push notifications are handled by Service Worker)
-    requestNotificationPermission();
   }, [isAuthenticated, authLoading, router, fetchUsers]);
   const resetFilters = () => {
     setAgeRange([18, 100]);
@@ -160,8 +157,6 @@ function DiscoverContent() {
             </div>,
             { duration: 3000 }
           );
-          // Show browser push notification
-          showMatchNotification(currentUser.name, currentUser.profilePhoto);
         } else if (action === 'like') {
           toast.info(`Liked ${currentUser.name}`);
         }

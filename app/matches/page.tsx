@@ -8,7 +8,6 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { MessageCircle, Heart, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { requestNotificationPermission } from '@/lib/notifications';
 import Image from 'next/image';
 
 interface Match {
@@ -37,8 +36,6 @@ export default function MatchesPage() {
       return;
     }
     fetchMatches();
-    // Request notification permission (push notifications are handled by Service Worker)
-    requestNotificationPermission();
   }, [isAuthenticated, authLoading, router]);
 
   const fetchMatches = async () => {
