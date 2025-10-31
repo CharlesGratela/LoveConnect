@@ -198,6 +198,7 @@ function DiscoverContent() {
 
   const handleTouchMove = (e: React.TouchEvent) => {
     if (!isDragging) return;
+    e.preventDefault(); // Prevent scrolling while swiping
     const touch = e.touches[0];
     const deltaX = touch.clientX - dragStart.x;
     const deltaY = touch.clientY - dragStart.y;
@@ -302,8 +303,8 @@ function DiscoverContent() {
   return (
     <>
       <Header />
-      <div className="container min-h-[calc(100vh-4rem)] p-4">
-        <div className="flex items-center justify-between mb-4">
+      <div className="container min-h-[calc(100vh-4rem)] max-h-[calc(100vh-4rem)] overflow-hidden p-4 flex flex-col">
+        <div className="flex items-center justify-between mb-4 flex-shrink-0">
           <h1 className="text-2xl font-bold">Discover</h1>
           <Button
             variant={showFilters ? 'default' : 'outline'}
@@ -412,9 +413,9 @@ function DiscoverContent() {
             </div>
           </Card>
         )}
-        <div className="flex items-center justify-center py-8">
+        <div className="flex items-center justify-center flex-1 overflow-hidden">
           <div
-            className="relative w-full max-w-sm h-[550px]"
+            className="relative w-full max-w-sm h-[550px] touch-none"
             onMouseMove={handleMouseMove}
             onTouchMove={handleTouchMove}
           >
