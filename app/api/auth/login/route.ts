@@ -67,6 +67,9 @@ export async function POST(request: NextRequest) {
       bio: user.bio,
       profilePhoto: user.profilePhoto,
       interests: user.interests,
+      gender: user.gender,
+      genderPreference: user.genderPreference,
+      location: user.location,
     };
 
     return NextResponse.json({ user: userResponse, token });

@@ -47,8 +47,6 @@ export default function ProfilePage() {
       return;
     }
     if (user) {
-      console.log('[Profile] User data:', user);
-      console.log('[Profile] User gender:', user.gender);
       setFormData({
         name: user.name,
         age: user.age.toString(),
