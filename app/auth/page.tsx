@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
@@ -21,8 +21,10 @@ const INTEREST_OPTIONS = [
   'Technology', 'Fashion', 'Food', 'Pets', 'Yoga', 'Coffee'
 ];
 
-export default function AuthPage() {
-  const [isLogin, setIsLogin] = useState(true);
+function AuthPageContent() {
+  const searchParams = useSearchParams();
+  const mode = searchParams.get('mode');
+  const [isLogin, setIsLogin] = useState(mode !== 'register');
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -421,5 +423,20 @@ export default function AuthPage() {
         </Card>
       </div>
     </div>
+  );
+}
+
+export default function AuthPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    }>
+      <AuthPageContent />
+    </Suspense>
   );
 }

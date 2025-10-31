@@ -29,7 +29,7 @@ export default function Home() {
           Discover meaningful connections powered by AI matching
         </p>
         <div className="flex gap-4 justify-center">
-          <Button size="lg" onClick={() => router.push('/auth')} className="gradient-primary">
+          <Button size="lg" onClick={() => router.push('/auth?mode=register')} className="gradient-primary">
             Get Started
           </Button>
           <Button size="lg" variant="outline" onClick={() => router.push('/auth')}>
