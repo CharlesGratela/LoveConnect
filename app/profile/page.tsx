@@ -12,13 +12,15 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { LogOut, Upload, X } from 'lucide-react';
 import Image from 'next/image';
+import { createClient as createSupabaseClient } from '@/lib/supabase/client';
+import { uploadProfilePhoto } from '@/lib/supabase/storage';
 const INTEREST_OPTIONS = [
   'Travel', 'Music', 'Movies', 'Sports', 'Reading', 'Cooking',
   'Fitness', 'Art', 'Gaming', 'Photography', 'Dancing', 'Hiking',
   'Technology', 'Fashion', 'Food', 'Pets', 'Yoga', 'Coffee'
 ];
 export default function ProfilePage() {
-  const { user, isAuthenticated, loading: authLoading, logout, updateProfile } = useAuth();
+  const { user, isAuthenticated, loading: authLoading, logout, updateProfile, authProvider } = useAuth();
   const router = useRouter();
   const [formData, setFormData] = useState({
     name: '',
@@ -83,7 +85,31 @@ export default function ProfilePage() {
       return;
     }
     setUploading(true);
-    // Convert to base64
+
+    if (authProvider === 'supabase' && user) {
+      const supabase = createSupabaseClient();
+
+      uploadProfilePhoto({
+        supabase,
+        userId: user.id,
+        file,
+        previousUrl: formData.profilePhoto,
+      })
+        .then(({ publicUrl }) => {
+          setFormData((current) => ({ ...current, profilePhoto: publicUrl }));
+          toast.success('Photo uploaded successfully!');
+        })
+        .catch((error) => {
+          console.error('Supabase photo upload error:', error);
+          toast.error('Failed to upload photo');
+        })
+        .finally(() => {
+          setUploading(false);
+        });
+
+      return;
+    }
+
     const reader = new FileReader();
     reader.onloadend = () => {
       const base64String = reader.result as string;
@@ -152,6 +178,25 @@ export default function ProfilePage() {
     setChangingPassword(true);
     
     try {
+      if (authProvider === 'supabase') {
+        const supabase = createSupabaseClient();
+        const { error } = await supabase.auth.updateUser({
+          password: passwordData.newPassword,
+        });
+
+        if (error) {
+          throw error;
+        }
+
+        toast.success('Password changed successfully!');
+        setPasswordData({
+          currentPassword: '',
+          newPassword: '',
+          confirmPassword: '',
+        });
+        return;
+      }
+
       const response = await fetch('/api/auth/change-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -466,13 +511,34 @@ export default function ProfilePage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
+            <div className="space-y-4">
+              <div>
+                <div className="mb-2 flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Profile completeness</span>
+                  <span className="font-medium text-foreground">
+                    {user.profileCompleteness ?? 0}%
+                  </span>
+                </div>
+                <div className="h-2 overflow-hidden rounded-full bg-muted">
+                  <div
+                    className="h-full bg-primary transition-all"
+                    style={{ width: `${user.profileCompleteness ?? 0}%` }}
+                  />
+                </div>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  {user.isProfileComplete
+                    ? 'Your profile is ready for the best recommendations.'
+                    : 'Complete more fields to improve match quality and visibility.'}
+                </p>
+              </div>
               <p className="text-sm text-muted-foreground">
                 Email: <span className="font-medium text-foreground">{user.email}</span>
               </p>
               <p className="text-sm text-muted-foreground">
                 Member since: <span className="font-medium text-foreground">
-                  {new Date().toLocaleDateString()}
+                  {user.memberSince
+                    ? new Date(user.memberSince).toLocaleDateString()
+                    : new Date().toLocaleDateString()}
                 </span>
               </p>
             </div>

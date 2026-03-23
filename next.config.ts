@@ -17,6 +17,10 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: '**.cloudinary.com',
       },
+      {
+        protocol: 'https',
+        hostname: '**.supabase.co',
+      },
     ],
     dangerouslyAllowSVG: true,
     contentDispositionType: 'attachment',

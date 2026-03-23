@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import Header from '@/components/layout/Header';
@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { MessageCircle, Heart, HeartCrack } from 'lucide-react';
 import { toast } from 'sonner';
 import Image from 'next/image';
+import { createClient as createSupabaseClient } from '@/lib/supabase/client';
 
 interface Match {
   id: string;
@@ -19,26 +20,16 @@ interface Match {
     age: number;
   };
   matchedAt: string;
+  unreadCount?: number;
 }
 
 export default function MatchesPage() {
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
-  const { isAuthenticated, loading: authLoading } = useAuth();
+  const { isAuthenticated, loading: authLoading, user, authProvider } = useAuth();
   const router = useRouter();
 
-  useEffect(() => {
-    // Wait for auth to load
-    if (authLoading) return;
-    
-    if (!isAuthenticated) {
-      router.push('/auth');
-      return;
-    }
-    fetchMatches();
-  }, [isAuthenticated, authLoading, router]);
-
-  const fetchMatches = async () => {
+  const fetchMatches = useCallback(async () => {
     try {
       const response = await fetch('/api/matches');
       if (response.ok) {
@@ -50,7 +41,57 @@ export default function MatchesPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    // Wait for auth to load
+    if (authLoading) return;
+    
+    if (!isAuthenticated) {
+      router.push('/auth');
+      return;
+    }
+    void fetchMatches();
+  }, [isAuthenticated, authLoading, router, fetchMatches]);
+
+  useEffect(() => {
+    if (
+      authLoading ||
+      authProvider !== 'supabase' ||
+      !isAuthenticated ||
+      !user?.id
+    ) {
+      return;
+    }
+
+    const supabase = createSupabaseClient();
+    const channel = supabase
+      .channel(`matches:${user.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'matches',
+        },
+        async (payload) => {
+          const record =
+            payload.eventType === 'DELETE' ? payload.old : payload.new;
+
+          const user1Id = String(record.user1_id || '');
+          const user2Id = String(record.user2_id || '');
+
+          if (user1Id === user.id || user2Id === user.id) {
+            await fetchMatches();
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [authLoading, authProvider, isAuthenticated, user?.id, fetchMatches]);
 
   const handleUnmatch = async (matchId: string, userName: string) => {
     try {
@@ -165,6 +206,11 @@ export default function MatchesPage() {
                   >
                     <MessageCircle className="mr-2 h-4 w-4" />
                     Chat
+                    {match.unreadCount ? (
+                      <span className="ml-2 inline-flex min-w-5 items-center justify-center rounded-full bg-white/20 px-1.5 text-xs">
+                        {match.unreadCount}
+                      </span>
+                    ) : null}
                   </Button>
                   <Button
                     variant="outline"

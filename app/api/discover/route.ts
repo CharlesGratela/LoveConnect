@@ -2,8 +2,39 @@ import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import { getUserFromToken } from '@/lib/auth';
 import { getRecommendedUsers } from '@/lib/matching';
+import { isSupabaseAuthEnabled } from '@/lib/auth-provider';
+import { createClient as createSupabaseClient } from '@/lib/supabase/server';
+import { getAuthenticatedSupabaseUser, getCurrentUserProfile } from '@/lib/supabase/dating';
+import { getAiRecommendedProfiles } from '@/lib/supabase/recommendations';
+
 export async function GET(request: NextRequest) {
   try {
+    if (isSupabaseAuthEnabled()) {
+      const supabase = await createSupabaseClient();
+      const authUser = await getAuthenticatedSupabaseUser(supabase);
+
+      if (!authUser) {
+        return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+      }
+
+      const { searchParams } = new URL(request.url);
+      const minAge = parseInt(searchParams.get('minAge') || '18');
+      const maxAge = parseInt(searchParams.get('maxAge') || '100');
+      const maxDistance = parseInt(searchParams.get('maxDistance') || '100');
+      const currentUser = await getCurrentUserProfile(supabase, authUser);
+      const users = await getAiRecommendedProfiles({
+        currentUser,
+        limit: 20,
+        filters: {
+          minAge,
+          maxAge,
+          maxDistance,
+        },
+      });
+
+      return NextResponse.json({ users });
+    }
+
     await dbConnect();
     const tokenData = await getUserFromToken();
     if (!tokenData) {

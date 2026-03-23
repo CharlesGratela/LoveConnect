@@ -1,6 +1,6 @@
 'use client';
 
-import { Heart, User, MessageCircle, LogOut, Moon, Sun, Search } from 'lucide-react';
+import { Shield, Heart, User, MessageCircle, LogOut, Moon, Sun, Search } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTheme } from 'next-themes';
@@ -13,11 +13,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { isAdminEmail } from '@/lib/admin-access';
 
 const Header = () => {
   const pathname = usePathname();
   const { logout, user } = useAuth();
   const { setTheme, theme } = useTheme();
+  const canModerate = isAdminEmail(user?.email);
 
   const isActive = (path: string) => pathname === path;
 
@@ -63,6 +65,18 @@ const Header = () => {
               <span className="ml-2 hidden md:inline">Profile</span>
             </Button>
           </Link>
+
+          {canModerate && (
+            <Link href="/admin/reports">
+              <Button
+                variant={isActive('/admin/reports') ? 'default' : 'ghost'}
+                className="transition-smooth"
+              >
+                <Shield className="h-5 w-5" />
+                <span className="ml-2 hidden md:inline">Moderation</span>
+              </Button>
+            </Link>
+          )}
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

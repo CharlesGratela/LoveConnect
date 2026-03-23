@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -14,6 +14,7 @@ import { toast } from 'sonner';
 import { Heart, Upload, X, MapPin } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { getCurrentLocation } from '@/lib/geolocation';
+import { createClient as createSupabaseClient } from '@/lib/supabase/client';
 
 const INTEREST_OPTIONS = [
   'Travel', 'Music', 'Movies', 'Sports', 'Reading', 'Cooking',
@@ -37,11 +38,56 @@ function AuthPageContent() {
     interests: [] as string[],
   });
   const [photoUrl, setPhotoUrl] = useState('');
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
 
-  const { login, register } = useAuth();
+  const { login, register, authProvider } = useAuth();
   const router = useRouter();
+
+  useEffect(() => {
+    return () => {
+      if (photoPreview) {
+        URL.revokeObjectURL(photoPreview);
+      }
+    };
+  }, [photoPreview]);
+
+  const handleResendVerification = async () => {
+    try {
+      if (authProvider === 'supabase') {
+        const supabase = createSupabaseClient();
+        const { error } = await supabase.auth.resend({
+          type: 'signup',
+          email: formData.email,
+          options: {
+            emailRedirectTo:
+              typeof window !== 'undefined'
+                ? `${window.location.origin}/auth/callback`
+                : undefined,
+          },
+        });
+
+        if (error) {
+          throw error;
+        }
+      } else {
+        const response = await fetch('/api/auth/resend-verification', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: formData.email }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to resend verification email');
+        }
+      }
+
+      toast.success('Verification email sent!');
+    } catch (error) {
+      toast.error('Failed to resend email');
+    }
+  };
 
   const handlePhotoUrlChange = () => {
     if (photoUrl.trim()) {
@@ -69,7 +115,18 @@ function AuthPageContent() {
 
     setUploading(true);
 
-    // Convert to base64
+    if (authProvider === 'supabase') {
+      if (photoPreview) {
+        URL.revokeObjectURL(photoPreview);
+      }
+
+      const nextPreview = URL.createObjectURL(file);
+      setPhotoPreview(nextPreview);
+      setUploading(false);
+      toast.info('Photo preview saved. Upload it from your profile after email confirmation.');
+      return;
+    }
+
     const reader = new FileReader();
     reader.onloadend = () => {
       const base64String = reader.result as string;
@@ -105,27 +162,16 @@ function AuthPageContent() {
           router.push('/discover');
         } catch (error: any) {
           // Check if error is due to unverified email
-          if (error.message?.includes('verify your email') || error.status === 403) {
+          if (
+            error.message?.includes('verify your email') ||
+            error.message?.toLowerCase().includes('email not confirmed') ||
+            error.status === 403
+          ) {
             toast.error('Please verify your email before logging in', {
               description: 'Check your inbox for the verification link',
               action: {
                 label: 'Resend Email',
-                onClick: async () => {
-                  try {
-                    const response = await fetch('/api/auth/resend-verification', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ email: formData.email }),
-                    });
-                    if (response.ok) {
-                      toast.success('Verification email sent!');
-                    } else {
-                      toast.error('Failed to resend email');
-                    }
-                  } catch (err) {
-                    toast.error('Failed to resend email');
-                  }
-                },
+                onClick: handleResendVerification,
               },
             });
           } else {
@@ -177,8 +223,16 @@ function AuthPageContent() {
           interests: formData.interests,
           location,
         });
+
+        if (authProvider === 'supabase' && photoPreview) {
+          toast.info('Your account was created. Upload your photo from the profile page after you confirm your email.');
+        }
+
         toast.success('Account created successfully!', {
-          description: 'Please check your email to verify your account',
+          description:
+            authProvider === 'supabase'
+              ? 'Please check your email for the Supabase confirmation link'
+              : 'Please check your email to verify your account',
         });
         setIsLogin(true); // Switch to login form
       }
@@ -290,7 +344,7 @@ function AuthPageContent() {
                     <div className="space-y-3">
                       <div className="flex items-center gap-4">
                         <Image
-                          src={formData.profilePhoto}
+                          src={photoPreview || formData.profilePhoto}
                           alt="Profile"
                           width={80}
                           height={80}

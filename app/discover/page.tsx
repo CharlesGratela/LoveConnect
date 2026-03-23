@@ -18,6 +18,8 @@ interface User {
   profilePhoto: string;
   interests: string[];
   distance?: number;
+  compatibilityScore?: number;
+  compatibilityReasons?: string[];
 }
 
 function DiscoverContent() {
@@ -113,7 +115,7 @@ function DiscoverContent() {
     } finally {
       setLoading(false);
     }
-  }, [ageRange, maxDistance, matchedWithUserId, likedByUserId, router]);
+  }, [ageRange, maxDistance, matchedWithUserId, likedByUserId]);
 
   useEffect(() => {
     // Wait for auth to load before redirecting
@@ -167,6 +169,47 @@ function DiscoverContent() {
     setCurrentIndex((prev) => prev + 1);
     setDragOffset({ x: 0, y: 0 });
   }, [currentIndex, users]);
+
+  const handleBlock = useCallback(async (userId: string) => {
+    try {
+      const response = await fetch('/api/block', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ blockedUserId: userId }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to block user');
+      }
+
+      setUsers((current) => current.filter((user) => user.id !== userId));
+      toast.success('User blocked');
+    } catch (error) {
+      toast.error('Failed to block user');
+    }
+  }, []);
+
+  const handleReport = useCallback(async (userId: string) => {
+    try {
+      const response = await fetch('/api/report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          reportedUserId: userId,
+          reason: 'inappropriate-profile',
+          details: 'Reported from discover swipe card',
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to report user');
+      }
+
+      toast.success('Report submitted');
+    } catch (error) {
+      toast.error('Failed to submit report');
+    }
+  }, []);
   const handleMouseDown = (e: React.MouseEvent) => {
     setDragStart({ x: e.clientX, y: e.clientY });
     setIsDragging(true);
@@ -425,6 +468,8 @@ function DiscoverContent() {
                 <SwipeCard
                   user={users[currentIndex + 1]}
                   onSwipe={() => {}}
+                  onBlock={handleBlock}
+                  onReport={handleReport}
                 />
               </div>
             )}
@@ -443,6 +488,8 @@ function DiscoverContent() {
                 user={currentUser}
                 onSwipe={handleSwipe}
                 isDragging={isDragging}
+                onBlock={handleBlock}
+                onReport={handleReport}
               />
             </div>
             {/* Swipe indicators */}

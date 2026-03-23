@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ArrowLeft, Send } from 'lucide-react';
 import Image from 'next/image';
+import { createClient as createSupabaseClient } from '@/lib/supabase/client';
 
 interface Message {
   id: string;
@@ -22,17 +23,20 @@ interface MatchUser {
   name: string;
   age: number;
   profilePhoto: string;
+  bio?: string;
+  interests?: string[];
 }
 
 export default function ChatPage() {
   const params = useParams();
   const router = useRouter();
-  const { user, isAuthenticated, loading: authLoading } = useAuth();
+  const { user, isAuthenticated, loading: authLoading, authProvider } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [matchUser, setMatchUser] = useState<MatchUser | null>(null);
   const [loading, setLoading] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const starterPrompts = getConversationStarters(matchUser);
 
   const matchId = params?.matchId as string;
 
@@ -56,10 +60,8 @@ export default function ChatPage() {
       const response = await fetch(`/api/messages?matchId=${matchId}`);
       if (response.ok) {
         const data = await response.json();
-        const newMessages = data.messages || [];
-        
-        // Update UI with new messages (push notifications handled by Service Worker)
-        setMessages(newMessages);
+        const nextMessages = data.messages || [];
+        setMessages(nextMessages);
       }
     } catch (error) {
       console.error('Error fetching messages:', error);
@@ -75,21 +77,81 @@ export default function ChatPage() {
       return;
     }
     if (matchId) {
-      // Load match and messages together
       const loadInitialData = async () => {
         await Promise.all([fetchMatch(), fetchMessages()]);
         setLoading(false);
       };
-      loadInitialData();
-      
-      // Poll for new messages every 3 seconds to update UI
-      const interval = setInterval(() => {
-        fetchMessages();
-      }, 3000);
-      
-      return () => clearInterval(interval);
+      void loadInitialData();
+
+      if (authProvider !== 'supabase') {
+        const interval = setInterval(() => {
+          void fetchMessages();
+        }, 3000);
+
+        return () => clearInterval(interval);
+      }
     }
-  }, [matchId, isAuthenticated, authLoading, router, fetchMatch, fetchMessages]);
+  }, [matchId, isAuthenticated, authLoading, router, fetchMatch, fetchMessages, authProvider]);
+
+  useEffect(() => {
+    if (
+      authLoading ||
+      authProvider !== 'supabase' ||
+      !isAuthenticated ||
+      !matchId ||
+      !user?.id
+    ) {
+      return;
+    }
+
+    const supabase = createSupabaseClient();
+    const channel = supabase
+      .channel(`messages:${matchId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+          filter: `match_id=eq.${matchId}`,
+        },
+        async (payload) => {
+          const incomingMessage = mapRealtimeMessage(payload.new);
+
+          setMessages((current) => {
+            if (current.some((message) => message.id === incomingMessage.id)) {
+              return current;
+            }
+
+            return [...current, incomingMessage];
+          });
+
+          if (incomingMessage.receiverId === user.id) {
+            await markMessagesRead(supabase, matchId, user.id);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [authLoading, authProvider, isAuthenticated, matchId, user?.id]);
+
+  useEffect(() => {
+    if (
+      authLoading ||
+      authProvider !== 'supabase' ||
+      !isAuthenticated ||
+      !matchId ||
+      !user?.id
+    ) {
+      return;
+    }
+
+    const supabase = createSupabaseClient();
+    void markMessagesRead(supabase, matchId, user.id);
+  }, [authLoading, authProvider, isAuthenticated, matchId, user?.id, messages]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -110,8 +172,6 @@ export default function ChatPage() {
       });
 
       if (response.ok) {
-        const data = await response.json();
-        setMessages([...messages, data.message]);
         setNewMessage('');
       }
     } catch (error) {
@@ -193,8 +253,23 @@ export default function ChatPage() {
         <div className="flex-1 overflow-y-auto py-4 space-y-4">
           {messages.length === 0 ? (
             <div className="flex items-center justify-center h-full">
-              <div className="text-center text-muted-foreground">
+              <div className="max-w-md text-center text-muted-foreground space-y-4">
                 <p>Start the conversation with {matchUser.name}!</p>
+                {starterPrompts.length > 0 && (
+                  <div className="flex flex-wrap justify-center gap-2">
+                    {starterPrompts.map((prompt) => (
+                      <Button
+                        key={prompt}
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setNewMessage(prompt)}
+                      >
+                        {prompt}
+                      </Button>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           ) : (
@@ -233,12 +308,32 @@ export default function ChatPage() {
 
         {/* Input */}
         <div className="py-4 border-t">
+          {messages.length > 0 && starterPrompts.length > 0 && (
+            <div className="mb-3 flex flex-wrap gap-2">
+              {starterPrompts.slice(0, 2).map((prompt) => (
+                <Button
+                  key={prompt}
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setNewMessage(prompt)}
+                >
+                  {prompt}
+                </Button>
+              ))}
+            </div>
+          )}
           <div className="flex gap-2">
             <Input
               placeholder="Type a message..."
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  void handleSend();
+                }
+              }}
               className="flex-1"
             />
             <Button onClick={handleSend} disabled={!newMessage.trim()} className="gradient-primary">
@@ -249,4 +344,60 @@ export default function ChatPage() {
       </div>
     </>
   );
+}
+
+function mapRealtimeMessage(record: Record<string, unknown>): Message {
+  return {
+    id: String(record.id),
+    senderId: String(record.sender_id),
+    receiverId: String(record.receiver_id),
+    text: String(record.text || ''),
+    timestamp: String(record.created_at),
+  };
+}
+
+async function markMessagesRead(
+  supabase: ReturnType<typeof createSupabaseClient>,
+  matchId: string,
+  userId: string
+) {
+  const { error } = await supabase
+    .from('messages')
+    .update({ read_at: new Date().toISOString() })
+    .eq('match_id', matchId)
+    .eq('receiver_id', userId)
+    .is('read_at', null);
+
+  if (error) {
+    console.error('Error marking messages as read:', error);
+  }
+}
+
+function getConversationStarters(matchUser: MatchUser | null) {
+  if (!matchUser) {
+    return [];
+  }
+
+  const prompts: string[] = [];
+  const interests = matchUser.interests || [];
+
+  if (interests.length > 0) {
+    prompts.push(`I saw you're into ${interests[0]}. What got you into it?`);
+  }
+
+  if (interests.length > 1) {
+    prompts.push(
+      `You seem fun. Which do you enjoy more lately: ${interests
+        .slice(0, 2)
+        .join(' or ')}?`
+    );
+  }
+
+  prompts.push("What's something you're genuinely excited about right now?");
+
+  if (matchUser.bio) {
+    prompts.push("What kind of first date sounds fun to you?");
+  }
+
+  return prompts.slice(0, 3);
 }

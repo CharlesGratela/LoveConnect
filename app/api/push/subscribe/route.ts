@@ -2,9 +2,51 @@ import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import { getUserFromToken } from '@/lib/auth';
 import { PushSubscription } from '@/models/PushSubscription';
+import { isSupabaseAuthEnabled } from '@/lib/auth-provider';
+import { createClient as createSupabaseClient } from '@/lib/supabase/server';
+import { getAuthenticatedSupabaseUser } from '@/lib/supabase/dating';
 
 export async function POST(request: NextRequest) {
   try {
+    if (isSupabaseAuthEnabled()) {
+      const supabase = await createSupabaseClient();
+      const authUser = await getAuthenticatedSupabaseUser(supabase);
+
+      if (!authUser) {
+        return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+      }
+
+      const body = await request.json();
+      const { subscription } = body;
+
+      if (!subscription || !subscription.endpoint) {
+        return NextResponse.json(
+          { message: 'Invalid subscription data' },
+          { status: 400 }
+        );
+      }
+
+      const { error } = await supabase.from('push_subscriptions').upsert(
+        {
+          user_id: authUser.id,
+          endpoint: subscription.endpoint,
+          p256dh: subscription.keys.p256dh,
+          auth: subscription.keys.auth,
+        },
+        {
+          onConflict: 'user_id,endpoint',
+        }
+      );
+
+      if (error) {
+        throw error;
+      }
+
+      return NextResponse.json({
+        message: 'Subscription saved successfully',
+      });
+    }
+
     // Verify authentication using cookies
     const tokenData = await getUserFromToken();
     

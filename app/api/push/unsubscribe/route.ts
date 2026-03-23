@@ -2,9 +2,34 @@ import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import { getUserFromToken } from '@/lib/auth';
 import { PushSubscription } from '@/models/PushSubscription';
+import { isSupabaseAuthEnabled } from '@/lib/auth-provider';
+import { createClient as createSupabaseClient } from '@/lib/supabase/server';
+import { getAuthenticatedSupabaseUser } from '@/lib/supabase/dating';
 
 export async function POST(request: NextRequest) {
   try {
+    if (isSupabaseAuthEnabled()) {
+      const supabase = await createSupabaseClient();
+      const authUser = await getAuthenticatedSupabaseUser(supabase);
+
+      if (!authUser) {
+        return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+      }
+
+      const { error } = await supabase
+        .from('push_subscriptions')
+        .delete()
+        .eq('user_id', authUser.id);
+
+      if (error) {
+        throw error;
+      }
+
+      return NextResponse.json({
+        message: 'Unsubscribed successfully',
+      });
+    }
+
     // Verify authentication using cookies
     const tokenData = await getUserFromToken();
     

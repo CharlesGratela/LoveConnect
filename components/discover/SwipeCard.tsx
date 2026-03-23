@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { MapPin, Heart, X } from 'lucide-react';
+import { AlertTriangle, Ban, MapPin, Heart, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
@@ -12,14 +12,18 @@ interface User {
   profilePhoto: string;
   interests: string[];
   distance?: number;
+  compatibilityScore?: number;
+  compatibilityReasons?: string[];
 }
 interface SwipeCardProps {
   user: User;
   onSwipe: (direction: 'left' | 'right') => void;
   style?: React.CSSProperties;
   isDragging?: boolean;
+  onBlock?: (userId: string) => void;
+  onReport?: (userId: string) => void;
 }
-const SwipeCard = ({ user, onSwipe, style, isDragging }: SwipeCardProps) => {
+const SwipeCard = ({ user, onSwipe, style, isDragging, onBlock, onReport }: SwipeCardProps) => {
   const [imageLoaded, setImageLoaded] = useState(false);
   return (
     <div
@@ -88,6 +92,33 @@ const SwipeCard = ({ user, onSwipe, style, isDragging }: SwipeCardProps) => {
                 </Badge>
               )}
             </div>
+            {user.compatibilityScore !== undefined && (
+              <div className="mb-3 space-y-2">
+                <div className="flex items-center justify-between text-xs text-white/90">
+                  <span>Compatibility</span>
+                  <span>{Math.round(user.compatibilityScore * 100)}%</span>
+                </div>
+                <div className="h-1.5 rounded-full bg-white/20 overflow-hidden">
+                  <div
+                    className="h-full bg-white transition-all"
+                    style={{ width: `${Math.min(100, Math.max(0, user.compatibilityScore * 100))}%` }}
+                  />
+                </div>
+                {user.compatibilityReasons && user.compatibilityReasons.length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    {user.compatibilityReasons.slice(0, 2).map((reason) => (
+                      <Badge
+                        key={reason}
+                        variant="secondary"
+                        className="glass text-white border-white/20 text-[10px] py-0 px-2"
+                      >
+                        {reason}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
             {/* Action Buttons */}
             <div className="flex items-center justify-center gap-3 mt-3">
               <Button
@@ -112,6 +143,40 @@ const SwipeCard = ({ user, onSwipe, style, isDragging }: SwipeCardProps) => {
                 <Heart className="h-7 w-7 fill-current" />
               </Button>
             </div>
+            {(onBlock || onReport) && (
+              <div className="mt-3 flex items-center justify-center gap-2">
+                {onBlock && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="text-white/80 hover:text-white hover:bg-white/10"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onBlock(user.id);
+                    }}
+                  >
+                    <Ban className="mr-1 h-3.5 w-3.5" />
+                    Block
+                  </Button>
+                )}
+                {onReport && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="text-white/80 hover:text-white hover:bg-white/10"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onReport(user.id);
+                    }}
+                  >
+                    <AlertTriangle className="mr-1 h-3.5 w-3.5" />
+                    Report
+                  </Button>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
